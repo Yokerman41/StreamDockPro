@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Fondo base con degradado diagonal oscuro -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF090E1A" />
+                <item android:offset="0.55" android:color="#FF111827" />
+                <item android:offset="1.0" android:color="#FF1E1B4B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Resplandor radial cian/violeta en el centro -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="52"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#3300F2FE" />
+                <item android:offset="0.55" android:color="#1A7C3AED" />
+                <item android:offset="1.0" android:color="#00000000" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

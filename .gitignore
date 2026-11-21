@@ -1,0 +1,24 @@
+# Rust build artifacts
+pc-companion-rust/target/
+
+# .NET / WPF build artifacts
+pc-companion-winui/**/bin/
+pc-companion-winui/**/obj/
+pc-companion-winui/.vs/
+
+# Android / Gradle build artifacts
+app/.gradle/
+app/.idea/
+app/build/
+app/app/build/
+app/local.properties
+*.iml
+*.hprof
+**/.artifacts/
+.idea/
+.vscode/
+
+# Intermediate dist folders (keep final release binaries)
+dist/tmp_publish/
+dist/StreamDockPro-PC/
+dist/Android/StreamDockPro-debug.apk

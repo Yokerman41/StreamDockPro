@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Sombra suave de la consola Stream Dock -->
+    <path
+        android:fillColor="#55000000"
+        android:pathData="M36,24L72,24A13,13 0,0 1,85 37L85,75A13,13 0,0 1,72 88L36,88A13,13 0,0 1,23 75L23,37A13,13 0,0 1,36 24Z" />
+
+    <!-- Carcasa principal de la consola Stream Dock Pro -->
+    <path
+        android:pathData="M36,22L72,22A13,13 0,0 1,85 35L85,73A13,13 0,0 1,72 86L36,86A13,13 0,0 1,23 73L23,35A13,13 0,0 1,36 22Z"
+        android:strokeWidth="1.8">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="23"
+                android:startY="22"
+                android:endX="85"
+                android:endY="86"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF0F172A" />
+                <item android:offset="1.0" android:color="#FF090D16" />
+            </gradient>
+        </aapt:attr>
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="23"
+                android:startY="22"
+                android:endX="85"
+                android:endY="86"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF00F2FE" />
+                <item android:offset="0.5" android:color="#FF38BDF8" />
+                <item android:offset="1.0" android:color="#FF8B5CF6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- ================= TECLA 1: SUPERIOR IZQUIERDA (STREAM / PLAY - CIAN) ================= -->
+    <path
+        android:pathData="M35,29L47,29A5,5 0,0 1,52 34L52,46A5,5 0,0 1,47 51L35,51A5,5 0,0 1,30 46L30,34A5,5 0,0 1,35 29Z"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FF00F2FE">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="29"
+                android:endX="52"
+                android:endY="51"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF083344" />
+                <item android:offset="1.0" android:color="#FF0E7490" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Icono Play -->
+    <path
+        android:fillColor="#FFE0F2FE"
+        android:pathData="M37.5,35.2L46.5,40L37.5,44.8Z" />
+
+    <!-- ================= TECLA 2: SUPERIOR DERECHA (AUDIO / OBS - VIOLETA) ================= -->
+    <path
+        android:pathData="M61,29L73,29A5,5 0,0 1,78 34L78,46A5,5 0,0 1,73 51L61,51A5,5 0,0 1,56 46L56,34A5,5 0,0 1,61 29Z"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FFA855F7">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="56"
+                android:startY="29"
+                android:endX="78"
+                android:endY="51"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF2E1065" />
+                <item android:offset="1.0" android:color="#FF6D28D9" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Barras de ecualizador -->
+    <path
+        android:fillColor="#FFF3E8FF"
+        android:pathData="M62,38.5L64.4,38.5A1.2,1.2 0,0 1,65.6 39.7L65.6,44.8A1.2,1.2 0,0 1,64.4 46L62,46A1.2,1.2 0,0 1,60.8 44.8L60.8,39.7A1.2,1.2 0,0 1,62 38.5Z" />
+    <path
+        android:fillColor="#FFF3E8FF"
+        android:pathData="M66.2,34L68.6,34A1.2,1.2 0,0 1,69.8 35.2L69.8,44.8A1.2,1.2 0,0 1,68.6 46L66.2,46A1.2,1.2 0,0 1,65 44.8L65,35.2A1.2,1.2 0,0 1,66.2 34Z" />
+    <path
+        android:fillColor="#FFF3E8FF"
+        android:pathData="M70.4,36.5L72.8,36.5A1.2,1.2 0,0 1,74 37.7L74,44.8A1.2,1.2 0,0 1,72.8 46L70.4,46A1.2,1.2 0,0 1,69.2 44.8L69.2,37.7A1.2,1.2 0,0 1,70.4 36.5Z" />
+
+    <!-- ================= TECLA 3: INFERIOR IZQUIERDA (SPOTIFY / MEDIA - VERDE) ================= -->
+    <path
+        android:pathData="M35,55L47,55A5,5 0,0 1,52 60L52,72A5,5 0,0 1,47 77L35,77A5,5 0,0 1,30 72L30,60A5,5 0,0 1,35 55Z"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FF1DB954">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="55"
+                android:endX="52"
+                android:endY="77"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF052E16" />
+                <item android:offset="1.0" android:color="#FF15803D" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Ondas acusticas estilo Spotify -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M35,62.5Q41,60 47,62.5"
+        android:strokeWidth="2.0"
+        android:strokeColor="#FFDCFCE7"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M36.2,66.2Q41,64.2 45.8,66.2"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FF86EFAC"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M37.5,69.8Q41,68.2 44.5,69.8"
+        android:strokeWidth="1.6"
+        android:strokeColor="#FF4ADE80"
+        android:strokeLineCap="round" />
+
+    <!-- ================= TECLA 4: INFERIOR DERECHA (MACRO / ACCION RAPIDA - AMBAR) ================= -->
+    <path
+        android:pathData="M61,55L73,55A5,5 0,0 1,78 60L78,72A5,5 0,0 1,73 77L61,77A5,5 0,0 1,56 72L56,60A5,5 0,0 1,61 55Z"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FFF59E0B">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="56"
+                android:startY="55"
+                android:endX="78"
+                android:endY="77"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF451A03" />
+                <item android:offset="1.0" android:color="#FFB45309" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Rayo de macro -->
+    <path
+        android:fillColor="#FFFEF08A"
+        android:pathData="M68.5,58.5L62.2,66.5L66.8,66.5L65.2,73.5L71.8,65.2L67.2,65.2Z" />
+
+    <!-- Barra LED inferior de estado -->
+    <path
+        android:fillColor="#FF00F2FE"
+        android:pathData="M43,80.5L65,80.5A1.2,1.2 0,0 1,66.2 81.7L66.2,81.8A1.2,1.2 0,0 1,65 83L43,83A1.2,1.2 0,0 1,41.8 81.8L41.8,81.7A1.2,1.2 0,0 1,43 80.5Z" />
+</vector>

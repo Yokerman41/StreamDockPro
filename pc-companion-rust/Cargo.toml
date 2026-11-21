@@ -1,0 +1,19 @@
+[package]
+name = "pc-companion-rust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Stream Dock Pro Team"]
+description = "High-performance asynchronous Rust core server for Stream Dock Pro"
+
+[dependencies]
+tokio = { version = "1.38", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dashmap = "5.5"
+uuid = { version = "1.8", features = ["v4", "serde"] }
+sha2 = "0.10"
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+futures-util = "0.3"
