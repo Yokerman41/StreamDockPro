@@ -105,3 +105,7 @@ Tanto en el panel derecho del **Editor de PC (`MainWindow.xaml`)** como en el mo
 - **Información Detallada por Proceso**: Título real de la ventana activa, nombre del ejecutable (`.exe`), PID de Windows y memoria RAM en Megabytes (`MB`) con badges cromáticos.
 - **Búsqueda y Filtros**: Buscador instantáneo por nombre/PID/título y filtros de 1 toque (`Apps con Ventana` vs `Todos los Procesos`).
 - **Finalización Remota de Procesos**: Botón `Finalizar` que invoca `kill_process` en el servidor Rust mediante `OpenProcess` + `TerminateProcess` / `taskkill /F /PID`, con diálogo de confirmación de seguridad.
+- **Optimización Integral para Modo Horizontal (Landscape)**:
+  - **Scroll Unificado Natural**: La cabecera, la barra de búsqueda y los filtros de selección se integraron directamente dentro del contenedor desplazable (`LazyColumn`). Al deslizar hacia arriba o hacia abajo, estos elementos se mueven suavemente con la lista en lugar de quedar fijos, liberando el 100% de la altura de la pantalla para visualizar los procesos.
+  - **Buscador y Filtros en Fila Compacta**: En orientación horizontal, la barra de búsqueda y los botones de filtro se organizan lado a lado en una sola fila (`Row(height = 44.dp)`), ahorrando más del 50% del espacio vertical.
+  - **Cuadrícula de 2 Columnas Paralelas**: Los procesos se agrupan en pares (`chunked(2)`) ocupando dos columnas balanceadas en pantallas panorámicas, lo que permite visualizar entre 6 y 10 procesos simultáneamente sin recortes ni saturación.

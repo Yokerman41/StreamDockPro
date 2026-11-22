@@ -1,5 +1,6 @@
 package com.streamdock.pro.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -74,6 +76,8 @@ fun TaskManagerScreen(
     var isManualRefreshing by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val isConnected = connectionState == WebSocketClient.ConnectionState.CONNECTED
 
     // Cargar procesos al entrar a la pantalla
@@ -109,280 +113,249 @@ fun TaskManagerScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF090B10))
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .background(Color(0xFF090B10)),
     ) {
-        // ENCABEZADO
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(if (isConnected) Color(0xFF00E676) else Color(0xFFFF5252)),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "ADMINISTRADOR DE TAREAS",
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.5.sp,
-                    )
-                }
-                Text(
-                    text = if (isConnected) "Windows PC • ${totalCount} procesos en ejecución" else "Desconectado de la PC",
-                    color = Color(0xFF7C829B),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = 18.dp),
-                )
-            }
-
-            // Botón de refrescar
-            Surface(
-                color = Color(0xFF161A28),
-                shape = RoundedCornerShape(10.dp),
-                border = BorderStroke(1.dp, Color(0xFF283048)),
-                modifier = Modifier.clickable {
-                    if (!isManualRefreshing) {
-                        isManualRefreshing = true
-                        onFetchProcesses()
-                        coroutineScope.launch {
-                            delay(600L)
-                            isManualRefreshing = false
-                        }
-                    }
-                },
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (isManualRefreshing) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF38BDF8),
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar procesos",
-                            tint = Color(0xFF38BDF8),
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Refrescar",
-                        color = Color(0xFF38BDF8),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // BARRA DE BÚSQUEDA
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = {
-                Text(
-                    text = "Buscar proceso o programa (ej. chrome, obs, discord)...",
-                    color = Color(0xFF565D75),
-                    fontSize = 12.sp,
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = Color(0xFF7C829B),
-                    modifier = Modifier.size(18.dp),
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Borrar",
-                            tint = Color(0xFF7C829B),
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF111420),
-                unfocusedContainerColor = Color(0xFF111420),
-                focusedBorderColor = Color(0xFF38BDF8),
-                unfocusedBorderColor = Color(0xFF22283A),
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // CHIPS DE FILTRO (Apps Principales vs Todos los Procesos)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Surface(
-                color = if (filterOnlyApps) Color(0xFF1E293B) else Color(0xFF111420),
-                shape = RoundedCornerShape(10.dp),
-                border = BorderStroke(
-                    1.dp,
-                    if (filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF22283A),
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { filterOnlyApps = true },
-            ) {
-                Row(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Layers,
-                        contentDescription = null,
-                        tint = if (filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF7C829B),
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Apps con Ventana ($appsCount)",
-                        color = if (filterOnlyApps) Color.White else Color(0xFF9499B0),
-                        fontSize = 11.5.sp,
-                        fontWeight = if (filterOnlyApps) FontWeight.Bold else FontWeight.Medium,
-                    )
-                }
-            }
-
-            Surface(
-                color = if (!filterOnlyApps) Color(0xFF1E293B) else Color(0xFF111420),
-                shape = RoundedCornerShape(10.dp),
-                border = BorderStroke(
-                    1.dp,
-                    if (!filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF22283A),
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { filterOnlyApps = false },
-            ) {
-                Row(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = null,
-                        tint = if (!filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF7C829B),
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Todos los Procesos ($totalCount)",
-                        color = if (!filterOnlyApps) Color.White else Color(0xFF9499B0),
-                        fontSize = 11.5.sp,
-                        fontWeight = if (!filterOnlyApps) FontWeight.Bold else FontWeight.Medium,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // LISTA DE PROCESOS
         if (!isConnected) {
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxSize()
+                    .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.WarningAmber,
                         contentDescription = null,
                         tint = Color(0xFFF59E0B),
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(54.dp),
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Text(
                         text = "No hay conexión con la PC",
                         color = Color.White,
-                        fontSize = 15.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Conecta la app por Wi-Fi o cable USB en la pestaña 'Conexión' para ver los procesos de Windows en tiempo real.",
+                        text = "Conecta la app por Wi-Fi o cable USB en la pestaña 'Conexión' para ver y administrar los procesos de Windows en tiempo real.",
                         color = Color(0xFF7C829B),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
+                        maxLines = 3,
                     )
                 }
             }
-        } else if (filteredProcesses.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = if (searchQuery.isNotEmpty()) {
-                        "No se encontraron procesos que coincidan con \"$searchQuery\""
-                    } else {
-                        "Cargando lista de procesos de Windows..."
-                    },
-                    color = Color(0xFF7C829B),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                )
-            }
         } else {
+            // LazyColumn unificada: el encabezado, la barra de búsqueda y los filtros
+            // se deslizan hacia arriba y abajo naturalmente junto con los procesos.
             LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(bottom = 12.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = if (isLandscape) 16.dp else 14.dp,
+                    vertical = 8.dp,
+                ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(
-                    items = filteredProcesses,
-                    key = { "${it.pid}-${it.name}" },
-                ) { process ->
-                    ProcessCard(
-                        process = process,
-                        onKillClick = { processToKill = process },
-                    )
+                // 1. ENCABEZADO SCROLLABLE
+                item(key = "header_section") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(9.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF00E676)),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "ADMINISTRADOR DE TAREAS",
+                                    color = Color.White,
+                                    fontSize = if (isLandscape) 14.sp else 15.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 0.5.sp,
+                                )
+                            }
+                            Text(
+                                text = "Windows PC • $totalCount procesos ($appsCount apps activas)",
+                                color = Color(0xFF7C829B),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(start = 17.dp),
+                            )
+                        }
+
+                        // Botón de refrescar
+                        Surface(
+                            color = Color(0xFF161A28),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, Color(0xFF283048)),
+                            modifier = Modifier.clickable {
+                                if (!isManualRefreshing) {
+                                    isManualRefreshing = true
+                                    onFetchProcesses()
+                                    coroutineScope.launch {
+                                        delay(600L)
+                                        isManualRefreshing = false
+                                    }
+                                }
+                            },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (isManualRefreshing) {
+                                    CircularProgressIndicator(
+                                        color = Color(0xFF38BDF8),
+                                        strokeWidth = 2.dp,
+                                        modifier = Modifier.size(13.dp),
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Actualizar procesos",
+                                        tint = Color(0xFF38BDF8),
+                                        modifier = Modifier.size(15.dp),
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Refrescar",
+                                    color = Color(0xFF38BDF8),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 2. BARRA DE BÚSQUEDA Y OPCIONES "APPS CON VENTANA" / "TODOS LOS PROCESOS"
+                // En horizontal se colocan en una sola fila compacta para ganar altura.
+                // En vertical se colocan una debajo de otra.
+                // Ambos se deslizan fluidamente al scrollear la lista.
+                item(key = "search_and_filters_section") {
+                    if (isLandscape) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            // Barra de Búsqueda Compacta en Horizontal
+                            Box(modifier = Modifier.weight(1.1f)) {
+                                SearchBarField(
+                                    searchQuery = searchQuery,
+                                    onQueryChange = { searchQuery = it },
+                                    height = 44.dp,
+                                )
+                            }
+
+                            // Filtros de Botón en Horizontal
+                            Box(modifier = Modifier.weight(0.9f)) {
+                                FilterChipsRow(
+                                    filterOnlyApps = filterOnlyApps,
+                                    appsCount = appsCount,
+                                    totalCount = totalCount,
+                                    onSelectOnlyApps = { filterOnlyApps = it },
+                                    height = 44.dp,
+                                )
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 4.dp),
+                        ) {
+                            SearchBarField(
+                                searchQuery = searchQuery,
+                                onQueryChange = { searchQuery = it },
+                                height = 48.dp,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FilterChipsRow(
+                                filterOnlyApps = filterOnlyApps,
+                                appsCount = appsCount,
+                                totalCount = totalCount,
+                                onSelectOnlyApps = { filterOnlyApps = it },
+                                height = 40.dp,
+                            )
+                        }
+                    }
+                }
+
+                // 3. ESTADO VACÍO CUANDO NO HAY COINCIDENCIAS
+                if (filteredProcesses.isEmpty()) {
+                    item(key = "empty_search_state") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = if (searchQuery.isNotEmpty()) {
+                                    "No se encontraron procesos que coincidan con \"$searchQuery\""
+                                } else {
+                                    "Cargando lista de procesos de Windows..."
+                                },
+                                color = Color(0xFF7C829B),
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                } else if (isLandscape) {
+                    // 4. LISTA EN MODO HORIZONTAL: 2 COLUMNAS PARALELAS
+                    // Aprovecha el ancho completo de la pantalla para mostrar más tareas
+                    items(
+                        items = filteredProcesses.chunked(2),
+                        key = { pair -> pair.joinToString("-") { "${it.pid}-${it.name}" } },
+                    ) { rowPair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            for (process in rowPair) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    ProcessCard(
+                                        process = process,
+                                        onKillClick = { processToKill = process },
+                                    )
+                                }
+                            }
+                            if (rowPair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                } else {
+                    // 4. LISTA EN MODO VERTICAL: 1 COLUMNA
+                    items(
+                        items = filteredProcesses,
+                        key = { "${it.pid}-${it.name}" },
+                    ) { process ->
+                        ProcessCard(
+                            process = process,
+                            onKillClick = { processToKill = process },
+                        )
+                    }
                 }
             }
         }
@@ -475,6 +448,142 @@ fun TaskManagerScreen(
 }
 
 @Composable
+private fun SearchBarField(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    height: androidx.compose.ui.unit.Dp,
+) {
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = onQueryChange,
+        placeholder = {
+            Text(
+                text = "Buscar proceso o app (ej. chrome, obs, discord)...",
+                color = Color(0xFF565D75),
+                fontSize = 11.5.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = Color(0xFF7C829B),
+                modifier = Modifier.size(17.dp),
+            )
+        },
+        trailingIcon = {
+            if (searchQuery.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Borrar",
+                        tint = Color(0xFF7C829B),
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFF111420),
+            unfocusedContainerColor = Color(0xFF111420),
+            focusedBorderColor = Color(0xFF38BDF8),
+            unfocusedBorderColor = Color(0xFF22283A),
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height),
+    )
+}
+
+@Composable
+private fun FilterChipsRow(
+    filterOnlyApps: Boolean,
+    appsCount: Int,
+    totalCount: Int,
+    onSelectOnlyApps: (Boolean) -> Unit,
+    height: androidx.compose.ui.unit.Dp,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Surface(
+            color = if (filterOnlyApps) Color(0xFF1E293B) else Color(0xFF111420),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(
+                1.dp,
+                if (filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF22283A),
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .height(height)
+                .clickable { onSelectOnlyApps(true) },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Layers,
+                    contentDescription = null,
+                    tint = if (filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF7C829B),
+                    modifier = Modifier.size(15.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Apps ($appsCount)",
+                    color = if (filterOnlyApps) Color.White else Color(0xFF9499B0),
+                    fontSize = 11.5.sp,
+                    fontWeight = if (filterOnlyApps) FontWeight.Bold else FontWeight.Medium,
+                    maxLines = 1,
+                )
+            }
+        }
+
+        Surface(
+            color = if (!filterOnlyApps) Color(0xFF1E293B) else Color(0xFF111420),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(
+                1.dp,
+                if (!filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF22283A),
+            ),
+            modifier = Modifier
+                .weight(1f)
+                .height(height)
+                .clickable { onSelectOnlyApps(false) },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Memory,
+                    contentDescription = null,
+                    tint = if (!filterOnlyApps) Color(0xFF38BDF8) else Color(0xFF7C829B),
+                    modifier = Modifier.size(15.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Todos ($totalCount)",
+                    color = if (!filterOnlyApps) Color.White else Color(0xFF9499B0),
+                    fontSize = 11.5.sp,
+                    fontWeight = if (!filterOnlyApps) FontWeight.Bold else FontWeight.Medium,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ProcessCard(
     process: ProcessItem,
     onKillClick: () -> Unit,
@@ -491,15 +600,15 @@ private fun ProcessCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 11.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             // Icono del proceso
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(9.dp))
                     .background(
                         if (process.isApp) Color(0xFF1E2842) else Color(0xFF171A26),
                     ),
@@ -509,11 +618,11 @@ private fun ProcessCard(
                     imageVector = if (process.isApp) Icons.Default.Computer else Icons.Default.Memory,
                     contentDescription = null,
                     tint = if (process.isApp) Color(0xFF38BDF8) else Color(0xFF7C829B),
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(19.dp),
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Información del proceso
             Column(modifier = Modifier.weight(1f)) {
@@ -521,7 +630,7 @@ private fun ProcessCard(
                 Text(
                     text = if (hasTitle) process.windowTitle else process.name,
                     color = Color.White,
-                    fontSize = 13.sp,
+                    fontSize = 12.5.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -534,7 +643,7 @@ private fun ProcessCard(
                     Text(
                         text = process.name,
                         color = if (hasTitle) Color(0xFF94A3B8) else Color(0xFF64748B),
-                        fontSize = 11.sp,
+                        fontSize = 10.5.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,
                         maxLines = 1,
@@ -544,7 +653,7 @@ private fun ProcessCard(
                     Text(
                         text = "• PID: ${process.pid}",
                         color = Color(0xFF64748B),
-                        fontSize = 10.5.sp,
+                        fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
                     )
                 }
@@ -563,15 +672,15 @@ private fun ProcessCard(
                     color = memColor.copy(alpha = 0.12f),
                     shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(0.5.dp, memColor.copy(alpha = 0.35f)),
-                    modifier = Modifier.padding(end = 8.dp),
+                    modifier = Modifier.padding(end = 6.dp),
                 ) {
                     Text(
                         text = "${process.memoryMb} MB",
                         color = memColor,
-                        fontSize = 10.5.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.5.dp),
                     )
                 }
             }
@@ -584,20 +693,20 @@ private fun ProcessCard(
                 modifier = Modifier.clickable(onClick = onKillClick),
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Finalizar",
                         tint = Color(0xFFF43F5E),
-                        modifier = Modifier.size(13.dp),
+                        modifier = Modifier.size(12.dp),
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = "Finalizar",
                         color = Color(0xFFF43F5E),
-                        fontSize = 10.5.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
