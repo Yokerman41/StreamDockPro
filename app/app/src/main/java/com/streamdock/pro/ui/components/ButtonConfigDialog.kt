@@ -102,20 +102,43 @@ private val presetsByCategory: Map<String, List<ActionPreset>> = mapOf(
         ActionPreset("MEDIA_CONTROL", "SPOTIFY_MUTE", "Spotify Mute", "Silencia solo Spotify", "mute", "#E74C3C"),
     ),
     "VOICEMEETER" to listOf(
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].Mute", "Mute Micrófono", "Hardware 1 (Realtek)", "mic_off", "#E74C3C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].A1", "Mic -> A1", "Monitoreo en Altavoces", "mic", "#9B59B6"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].B1", "Mic -> B1", "Canal Discord/OBS", "stream", "#2ECC71"),
-        ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP0", "🎚️ Fader Micrófono", "Ganancia Mic (Hardware 1)", "vol_up", "#FFB86C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].Mute", "Mute VAIO (PC)", "Audio Virtual Voicemeeter", "mute", "#E74C3C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].A2", "VAIO -> A2", "Audio PC a Auriculares", "vol_up", "#3498DB"),
+        // Salidas Master (Outputs A1..B2)
+        ActionPreset("VOICEMEETER", "VOICEMEETER_OUTPUT_A1", "Salida Master A1", "Altavoces Realtek (ON/MUTE)", "vol_up", "#2ECC71"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_OUTPUT_A2", "Salida Master A2", "GPM27Q NVIDIA (ON/MUTE)", "vol_up", "#3498DB"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_OUTPUT_A3", "Salida Master A3", "Altavoces F998 (ON/MUTE)", "vol_up", "#9B59B6"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_OUTPUT_B1", "Salida Master B1", "Canal Virtual OBS/Stream", "stream", "#E67E22"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_OUTPUT_B2", "Salida Master B2", "Canal Virtual AUX", "stream", "#E67E22"),
+
+        // Entradas (Inputs) - Micrófono (Hardware 1)
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].Mute", "Activar/Mute Mic", "Micrófono Realtek", "mic_off", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].A1", "Mic -> Salida A1", "Altavoces Realtek", "mic", "#9B59B6"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].A2", "Mic -> Salida A2", "GPM27Q NVIDIA", "mic", "#3498DB"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].A3", "Mic -> Salida A3", "Altavoces F998", "mic", "#CBA6F7"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].B1", "Mic -> Salida B1", "OBS Studio / Discord", "stream", "#2ECC71"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].B2", "Mic -> Salida B2", "Virtual AUX Out", "stream", "#A6E3A1"),
+        ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP0", "🎚️ Fader Micrófono", "Ganancia Mic en perfil", "vol_up", "#FFB86C"),
+
+        // Entradas (Inputs) - PC / Juegos (Voicemeeter VAIO - Strip 3)
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].Mute", "Activar/Mute VAIO", "Audio PC / Juegos", "mute", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].A1", "VAIO -> Salida A1", "Altavoces Realtek", "vol_up", "#9B59B6"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].A2", "VAIO -> Salida A2", "Auriculares NVIDIA", "vol_up", "#3498DB"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].A3", "VAIO -> Salida A3", "Altavoces F998", "vol_up", "#CBA6F7"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].B1", "VAIO -> Salida B1", "Audio PC a OBS", "stream", "#2ECC71"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].B2", "VAIO -> Salida B2", "Audio PC a AUX B2", "stream", "#A6E3A1"),
         ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP3", "🎚️ Fader VAIO PC", "Volumen Voicemeeter Input", "vol_up", "#FFB86C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].Mute", "Mute AUX", "Audio Virtual Auxiliar", "mute", "#E74C3C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].A1", "AUX -> A1", "Aux a Altavoces", "vol_up", "#9B59B6"),
+
+        // Entradas (Inputs) - Música / Chat (Voicemeeter AUX - Strip 4)
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].Mute", "Activar/Mute AUX", "Discord / Spotify", "mute", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].A1", "AUX -> Salida A1", "Altavoces Realtek", "vol_up", "#9B59B6"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].A2", "AUX -> Salida A2", "Auriculares NVIDIA", "vol_up", "#3498DB"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].A3", "AUX -> Salida A3", "Altavoces F998", "vol_up", "#CBA6F7"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].B1", "AUX -> Salida B1", "AUX a OBS Studio", "stream", "#2ECC71"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].B2", "AUX -> Salida B2", "AUX a B2", "stream", "#A6E3A1"),
         ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP4", "🎚️ Fader AUX", "Volumen Voicemeeter AUX", "vol_up", "#FFB86C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Bus[0].Mute", "Mute Master A1", "Altavoces Realtek", "mute", "#E74C3C"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Bus[1].Mute", "Mute Master A2", "NVIDIA GPM27Q", "mute", "#E74C3C"),
+
+        // Utilidades
         ActionPreset("VOICEMEETER", "VOICEMEETER_RESTART", "Reiniciar Audio", "Reiniciar motor Voicemeeter", "power", "#E67E22"),
-        ActionPreset("VOICEMEETER", "VOICEMEETER_SHOW", "Abrir Interfaz", "Mostrar ventana Voicemeeter", "apps", "#3498DB"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_SHOW", "Abrir Interfaz", "Mostrar ventana Banana", "apps", "#3498DB"),
     ),
     "WINDOWS" to listOf(
         ActionPreset("LAUNCH_APP", "WIN_MINIMIZE", "Minimizar", "Oculta ventana activa", "computer", "#3498DB"),

@@ -109,6 +109,7 @@ impl VmrApi {
     }
 
     fn get_float(&self, param: &str) -> Option<f32> {
+        let _ = unsafe { (self._is_dirty)() };
         let c_str = CString::new(param).ok()?;
         let mut val = 0.0f32;
         let res = unsafe { (self.get_param_float)(c_str.as_ptr(), &mut val) };
@@ -130,9 +131,11 @@ impl VmrApi {
     }
 
     fn toggle_bool(&self, param: &str) -> Result<bool, String> {
+        let _ = unsafe { (self._is_dirty)() };
         let current = self.get_float(param).unwrap_or(0.0);
         let new_val = if current > 0.5 { 0.0 } else { 1.0 };
         self.set_float(param, new_val)?;
+        info!("Voicemeeter toggled '{}': {} -> {}", param, current, new_val);
         Ok(new_val > 0.5)
     }
 
@@ -340,7 +343,92 @@ impl VoicemeeterPlugin {
             return Self::show_ui();
         }
 
-        // Toggle: e.g. VOICEMEETER_TOGGLE:Strip[0].Mute o VOICEMEETER_MUTE:Strip[0]
+        // Salidas Master: Activar / Desactivar (Mute toggle)
+        if norm.eq_ignore_ascii_case("VOICEMEETER_OUTPUT_A1") || norm.eq_ignore_ascii_case("VM_OUT_A1") {
+            let _ = Self::toggle_parameter("Bus[0].Mute")?;
+            return Ok(());
+        }
+        if norm.eq_ignore_ascii_case("VOICEMEETER_OUTPUT_A2") || norm.eq_ignore_ascii_case("VM_OUT_A2") {
+            let _ = Self::toggle_parameter("Bus[1].Mute")?;
+            return Ok(());
+        }
+        if norm.eq_ignore_ascii_case("VOICEMEETER_OUTPUT_A3") || norm.eq_ignore_ascii_case("VM_OUT_A3") {
+            let _ = Self::toggle_parameter("Bus[2].Mute")?;
+            return Ok(());
+        }
+        if norm.eq_ignore_ascii_case("VOICEMEETER_OUTPUT_B1") || norm.eq_ignore_ascii_case("VM_OUT_B1") {
+            let _ = Self::toggle_parameter("Bus[3].Mute")?;
+            return Ok(());
+        }
+        if norm.eq_ignore_ascii_case("VOICEMEETER_OUTPUT_B2") || norm.eq_ignore_ascii_case("VM_OUT_B2") {
+            let _ = Self::toggle_parameter("Bus[4].Mute")?;
+            return Ok(());
+        }
+
+        if let Some(out_name) = norm.strip_prefix("VOICEMEETER_OUTPUT:")
+            .or_else(|| norm.strip_prefix("VM_OUTPUT:"))
+        {
+            let bus_idx = match out_name.trim().to_uppercase().as_str() {
+                "A1" => 0,
+                "A2" => 1,
+                "A3" => 2,
+                "B1" => 3,
+                "B2" => 4,
+                _ => 0,
+            };
+            let param = format!("Bus[{bus_idx}].Mute");
+            let _ = Self::toggle_parameter(&param)?;
+            return Ok(());
+        }
+
+        // Entradas (Inputs): Activar / Desactivar (Mute toggle)
+        if norm.eq_ignore_ascii_case("VOICEMEETER_INPUT_MIC") || norm.eq_ignore_ascii_case("VM_IN_MIC") {
+            let _ = Self::toggle_parameter("Strip[0].Mute")?;
+            return Ok(());
+        }
+        if norm.eq_ignore_ascii_case("VOICEMEETER_INPUT_VAIO") || norm.eq_ignore_ascii_case("VM_IN_VAIO") {
+            let _ = Self::toggle_parameter("Strip[3].Mute")?;
+            return Ok(());
+        }
+        if norm.eq_ignore_ascii_case("VOICEMEETER_INPUT_AUX") || norm.eq_ignore_ascii_case("VM_IN_AUX") {
+            let _ = Self::toggle_parameter("Strip[4].Mute")?;
+            return Ok(());
+        }
+
+        if let Some(in_name) = norm.strip_prefix("VOICEMEETER_INPUT:")
+            .or_else(|| norm.strip_prefix("VM_INPUT:"))
+        {
+            let strip_idx = match in_name.trim().to_uppercase().as_str() {
+                "MIC" | "0" => 0,
+                "1" => 1,
+                "2" => 2,
+                "VAIO" | "3" => 3,
+                "AUX" | "4" => 4,
+                _ => 0,
+            };
+            let param = format!("Strip[{strip_idx}].Mute");
+            let _ = Self::toggle_parameter(&param)?;
+            return Ok(());
+        }
+
+        // Enrutamiento (Routing): VOICEMEETER_ROUTE:Strip[0].A1 o VM_ROUTE:0:A1
+        if let Some(route_str) = norm.strip_prefix("VOICEMEETER_ROUTE:")
+            .or_else(|| norm.strip_prefix("VM_ROUTE:"))
+        {
+            let param = if route_str.contains('.') {
+                route_str.trim().to_string()
+            } else if let Some((strip_str, bus_str)) = route_str.split_once(':') {
+                let strip_idx: usize = strip_str.trim().trim_start_matches("Strip[").trim_end_matches(']').parse().unwrap_or(0);
+                let bus = bus_str.trim().to_uppercase();
+                format!("Strip[{strip_idx}].{bus}")
+            } else {
+                route_str.trim().to_string()
+            };
+            let _ = Self::toggle_parameter(&param)?;
+            return Ok(());
+        }
+
+        // Toggle genérico: e.g. VOICEMEETER_TOGGLE:Strip[0].Mute o VOICEMEETER_MUTE:Strip[0]
         if let Some(param) = norm.strip_prefix("VOICEMEETER_TOGGLE:")
             .or_else(|| norm.strip_prefix("VM_TOGGLE:"))
         {

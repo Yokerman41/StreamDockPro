@@ -1245,18 +1245,36 @@ namespace StreamDockWinUI.ViewModels
             {
                 SelectedButton.Label = presetValue switch
                 {
+                    "VOICEMEETER_OUTPUT_A1" or "VOICEMEETER_TOGGLE:Bus[0].Mute" => "Salida A1",
+                    "VOICEMEETER_OUTPUT_A2" or "VOICEMEETER_TOGGLE:Bus[1].Mute" => "Salida A2",
+                    "VOICEMEETER_OUTPUT_A3" or "VOICEMEETER_TOGGLE:Bus[2].Mute" => "Salida A3",
+                    "VOICEMEETER_OUTPUT_B1" or "VOICEMEETER_TOGGLE:Bus[3].Mute" => "Salida B1",
+                    "VOICEMEETER_OUTPUT_B2" or "VOICEMEETER_TOGGLE:Bus[4].Mute" => "Salida B2",
+
                     "VOICEMEETER_TOGGLE:Strip[0].Mute" => "Mute Mic",
                     "VOICEMEETER_TOGGLE:Strip[0].A1" => "Mic -> A1",
+                    "VOICEMEETER_TOGGLE:Strip[0].A2" => "Mic -> A2",
+                    "VOICEMEETER_TOGGLE:Strip[0].A3" => "Mic -> A3",
                     "VOICEMEETER_TOGGLE:Strip[0].B1" => "Mic -> B1",
+                    "VOICEMEETER_TOGGLE:Strip[0].B2" => "Mic -> B2",
                     "VOLUME_SLIDER_VM_STRIP0" => "Fader Mic",
+
                     "VOICEMEETER_TOGGLE:Strip[3].Mute" => "Mute VAIO",
+                    "VOICEMEETER_TOGGLE:Strip[3].A1" => "VAIO -> A1",
                     "VOICEMEETER_TOGGLE:Strip[3].A2" => "VAIO -> A2",
+                    "VOICEMEETER_TOGGLE:Strip[3].A3" => "VAIO -> A3",
+                    "VOICEMEETER_TOGGLE:Strip[3].B1" => "VAIO -> B1",
+                    "VOICEMEETER_TOGGLE:Strip[3].B2" => "VAIO -> B2",
                     "VOLUME_SLIDER_VM_STRIP3" => "Fader VAIO",
+
                     "VOICEMEETER_TOGGLE:Strip[4].Mute" => "Mute AUX",
                     "VOICEMEETER_TOGGLE:Strip[4].A1" => "AUX -> A1",
+                    "VOICEMEETER_TOGGLE:Strip[4].A2" => "AUX -> A2",
+                    "VOICEMEETER_TOGGLE:Strip[4].A3" => "AUX -> A3",
+                    "VOICEMEETER_TOGGLE:Strip[4].B1" => "AUX -> B1",
+                    "VOICEMEETER_TOGGLE:Strip[4].B2" => "AUX -> B2",
                     "VOLUME_SLIDER_VM_STRIP4" => "Fader AUX",
-                    "VOICEMEETER_TOGGLE:Bus[0].Mute" => "Mute Master A1",
-                    "VOICEMEETER_TOGGLE:Bus[1].Mute" => "Mute Master A2",
+
                     "VOICEMEETER_RESTART" => "Reiniciar Audio",
                     "VOICEMEETER_SHOW" => "Voicemeeter",
                     _ => presetValue
@@ -1264,10 +1282,11 @@ namespace StreamDockWinUI.ViewModels
                 SelectedButton.IconName = presetValue switch
                 {
                     "VOICEMEETER_TOGGLE:Strip[0].Mute" => "mic_off",
-                    "VOICEMEETER_TOGGLE:Strip[0].A1" => "mic",
-                    "VOICEMEETER_TOGGLE:Strip[0].B1" => "stream",
+                    "VOICEMEETER_TOGGLE:Strip[0].A1" or "VOICEMEETER_TOGGLE:Strip[0].A2" or "VOICEMEETER_TOGGLE:Strip[0].A3" => "mic",
+                    "VOICEMEETER_TOGGLE:Strip[0].B1" or "VOICEMEETER_TOGGLE:Strip[0].B2" => "stream",
                     "VOLUME_SLIDER_VM_STRIP0" or "VOLUME_SLIDER_VM_STRIP3" or "VOLUME_SLIDER_VM_STRIP4" => "vol_up",
-                    "VOICEMEETER_TOGGLE:Strip[3].Mute" or "VOICEMEETER_TOGGLE:Strip[4].Mute" or "VOICEMEETER_TOGGLE:Bus[0].Mute" or "VOICEMEETER_TOGGLE:Bus[1].Mute" => "mute",
+                    var s when s.StartsWith("VOICEMEETER_OUTPUT") => "vol_up",
+                    var s when s.Contains("Mute") => "mute",
                     "VOICEMEETER_RESTART" => "power",
                     "VOICEMEETER_SHOW" => "apps",
                     _ => "settings"
@@ -1275,6 +1294,7 @@ namespace StreamDockWinUI.ViewModels
                 SelectedButton.BackgroundColor = presetValue switch
                 {
                     var s when s.Contains("Mute") => "#E74C3C",
+                    var s when s.StartsWith("VOICEMEETER_OUTPUT") => "#2ECC71",
                     var s when s.StartsWith("VOLUME_SLIDER") => "#FFB86C",
                     "VOICEMEETER_RESTART" => "#E67E22",
                     _ => "#2A2A3C"

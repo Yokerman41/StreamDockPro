@@ -1327,37 +1327,53 @@
                                         </Border>
                                     </UniformGrid>
 
-                                    <TextBlock Text="SALIDAS MASTER Y SISTEMA" FontWeight="SemiBold" Foreground="#A6ADC8" FontSize="9" Margin="0,2,0,4"/>
+                                    <TextBlock Text="SALIDAS MASTER (ACTIVAR / DESACTIVAR OUTPUTS)" FontWeight="SemiBold" Foreground="#A6ADC8" FontSize="9" Margin="0,2,0,4"/>
                                     <UniformGrid Columns="2">
-                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Bus[0].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#2ECC71">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_OUTPUT_A1" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
                                                 <StackPanel>
-                                                    <TextBlock Text="🔇 Mute Master A1" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="🔊 Salida A1 (ON/MUTE)" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11"/>
                                                     <TextBlock Text="Altavoces Realtek" Foreground="#A6ADC8" FontSize="9"/>
                                                 </StackPanel>
                                             </Button>
                                         </Border>
-                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Bus[1].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#3498DB">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_OUTPUT_A2" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
                                                 <StackPanel>
-                                                    <TextBlock Text="🔇 Mute Master A2" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
-                                                    <TextBlock Text="GPM27Q NVIDIA" Foreground="#A6ADC8" FontSize="9"/>
+                                                    <TextBlock Text="🎧 Salida A2 (ON/MUTE)" FontWeight="Bold" Foreground="#89B4FA" FontSize="11"/>
+                                                    <TextBlock Text="Auriculares GPM27Q" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#9B59B6">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_OUTPUT_A3" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔈 Salida A3 (ON/MUTE)" FontWeight="Bold" Foreground="#CBA6F7" FontSize="11"/>
+                                                    <TextBlock Text="Altavoces F998" Foreground="#A6ADC8" FontSize="9"/>
                                                 </StackPanel>
                                             </Button>
                                         </Border>
                                         <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#FAB387">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_RESTART" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_OUTPUT_B1" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
                                                 <StackPanel>
-                                                    <TextBlock Text="🔄 Reiniciar Motor" FontWeight="Bold" Foreground="#FAB387" FontSize="11"/>
-                                                    <TextBlock Text="Restart Audio Engine" Foreground="#A6ADC8" FontSize="9"/>
+                                                    <TextBlock Text="📡 Salida B1 (ON/MUTE)" FontWeight="Bold" Foreground="#FAB387" FontSize="11"/>
+                                                    <TextBlock Text="Virtual OBS Studio" Foreground="#A6ADC8" FontSize="9"/>
                                                 </StackPanel>
                                             </Button>
                                         </Border>
-                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#89B4FA">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_SHOW" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#FAB387">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_OUTPUT_B2" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
                                                 <StackPanel>
-                                                    <TextBlock Text="🪟 Abrir Interfaz" FontWeight="Bold" Foreground="#89B4FA" FontSize="11"/>
-                                                    <TextBlock Text="Mostrar ventana Banana" Foreground="#A6ADC8" FontSize="9"/>
+                                                    <TextBlock Text="📡 Salida B2 (ON/MUTE)" FontWeight="Bold" Foreground="#FAB387" FontSize="11"/>
+                                                    <TextBlock Text="Virtual AUX Out" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#F38BA8">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_RESTART" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔄 Reiniciar Motor" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="Restart Audio Engine" Foreground="#A6ADC8" FontSize="9"/>
                                                 </StackPanel>
                                             </Button>
                                         </Border>

@@ -103,14 +103,13 @@ Se reemplazó la lista desplegable técnica por una matriz visual de **8 Categor
    - El servidor Rust (`pc-companion-rust/src/plugins/voicemeeter.rs`) localiza y enlaza en tiempo de ejecución la biblioteca oficial de `C:\Program Files (x86)\VB\Voicemeeter\VoicemeeterRemote64.dll`.
    - Inicializa sesión `VBVMR_Login` y detecta automáticamente el tipo de consola (`Voicemeeter Banana` = Tipo 2).
    - Control instantáneo sin latencia de entradas físicas (`Strip[0]` Micrófono Realtek), virtuales (`Strip[3]` VAIO y `Strip[4]` AUX), y buses de salida (`Bus[0..4]`).
-2. **Presets de Acción en el Editor de PC y Modal de Configuración Android**:
-   - Nueva categoría **`🎛️ Voicemeeter`** integrada tanto en el Editor WinUI de Windows como en el modal de botones en Android:
-     - *Micrófono*: Mute/Unmute (`VOICEMEETER_TOGGLE:Strip[0].Mute`), envío a monitoreo A1 (`VOICEMEETER_TOGGLE:Strip[0].A1`), envío a Discord/OBS B1 (`VOICEMEETER_TOGGLE:Strip[0].B1`).
-     - *Voicemeeter VAIO (PC/Juegos)*: Mute (`VOICEMEETER_TOGGLE:Strip[3].Mute`), envío a Auriculares A2 (`VOICEMEETER_TOGGLE:Strip[3].A2`).
-     - *Voicemeeter AUX*: Mute (`VOICEMEETER_TOGGLE:Strip[4].Mute`), envío a Altavoces A1 (`VOICEMEETER_TOGGLE:Strip[4].A1`).
-     - *Buses Master*: Mute Master A1 (`VOICEMEETER_TOGGLE:Bus[0].Mute`) y Mute Master A2 (`VOICEMEETER_TOGGLE:Bus[1].Mute`).
-     - *Mantenimiento*: Reinicio del motor de audio en 1 toque (`VOICEMEETER_RESTART`) y abrir la ventana de Voicemeeter (`VOICEMEETER_SHOW`).
-3. **Faders Verticales Táctiles para Pistas de Voicemeeter**:
+2. **Matriz de Control Visual en Quick Deck (`ApplicationsScreen.kt`)**:
+   - Tarjeta interactiva **`VOICEMEETER BANANA`** en el centro de control rápido:
+     - **Fila de Salidas Master A1..B2**: Botones táctiles de 1 toque para encender o silenciar (`ON / MUTE`) las salidas `A1` (Altavoces), `A2` (Auriculares), `A3` (F998), `B1` (Stream OBS) y `B2` (Aux Virtual).
+     - **Matriz de Enrutamiento por Entrada**: Filas dedicadas para *Micrófono (Input 1)*, *PC / Juegos (VAIO)* y *Música / Chat (AUX)* con interruptor de Mute individual y matriz de 5 selectores directos (`[A1]`, `[A2]`, `[A3]`, `[B1]`, `[B2]`) con iluminación reactiva.
+3. **Presets de Acción en el Editor de PC y Modal de Configuración Android**:
+   - Categoría **`🎛️ Voicemeeter`** con acciones inmediatas para Salidas Master (`VOICEMEETER_OUTPUT_A1` hasta `B2`), Mute de entradas y conmutación de enrutamiento a cualquier bus (`VOICEMEETER_TOGGLE:Strip[x].A1..B2`).
+4. **Faders Verticales Táctiles para Pistas de Voicemeeter**:
    - Soporte para botones deslizantes táctiles en el perfil de la app (`VOLUME_SLIDER_VM_STRIP0` para Micrófono, `VOLUME_SLIDER_VM_STRIP3` para PC VAIO, `VOLUME_SLIDER_VM_STRIP4` para AUX).
    - Permiten modular el volumen de cada pista deslizando el dedo de arriba a abajo directamente sobre el botón.
 
