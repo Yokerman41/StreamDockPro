@@ -318,6 +318,39 @@ async fn handle_socket(socket: WebSocket, state: Arc<ServerState>) {
                         };
                         let _ = state.broadcast_tx.send(reply);
                     }
+                    "get_processes" => {
+                        let target_uuid = envelope.uuid.clone();
+                        let processes = crate::plugins::task_manager::TaskManagerPlugin::get_process_list();
+                        let reply = WsEnvelope {
+                            r#type: "process_list".to_string(),
+                            uuid: target_uuid,
+                            timestamp: Some(chrono::Utc::now().timestamp_millis() as u64),
+                            payload: Some(serde_json::json!({
+                                "processes": processes
+                            })),
+                        };
+                        let _ = state.broadcast_tx.send(reply);
+                    }
+                    "kill_process" => {
+                        let target_uuid = envelope.uuid.clone();
+                        if let Some(ref payload) = envelope.payload {
+                            let pid = payload.get("pid").and_then(|v| v.as_u64()).map(|p| p as u32);
+                            if let Some(pid) = pid {
+                                let _ = crate::plugins::task_manager::TaskManagerPlugin::kill_process(pid);
+                            }
+                        }
+                        tokio::time::sleep(tokio::time::Duration::from_millis(150)).await;
+                        let processes = crate::plugins::task_manager::TaskManagerPlugin::get_process_list();
+                        let reply = WsEnvelope {
+                            r#type: "process_list".to_string(),
+                            uuid: target_uuid,
+                            timestamp: Some(chrono::Utc::now().timestamp_millis() as u64),
+                            payload: Some(serde_json::json!({
+                                "processes": processes
+                            })),
+                        };
+                        let _ = state.broadcast_tx.send(reply);
+                    }
                     "action" => {
                         info!("Action trigger received from client: {:?}", envelope.uuid);
                         if let Some(payload) = envelope.payload {

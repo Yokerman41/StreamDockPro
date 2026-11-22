@@ -26,6 +26,7 @@ class StreamDockViewModel(
     val workspace: StateFlow<Workspace?> = repository.workspace
     val connectionState: StateFlow<WebSocketClient.ConnectionState> = repository.connectionState
     val obsScenes: StateFlow<List<String>> = repository.obsScenes
+    val processes = repository.processes
 
     private val settingsManager = ConnectionSettingsManager(application)
     private val discoveryManager = DiscoveryManager(application)
@@ -122,6 +123,14 @@ class StreamDockViewModel(
 
     fun fetchObsScenes() {
         repository.requestObsScenes()
+    }
+
+    fun fetchProcesses() {
+        repository.requestProcesses()
+    }
+
+    fun killProcess(pid: Long) {
+        repository.killProcess(pid)
     }
 
     fun switchToScene(sceneName: String) {

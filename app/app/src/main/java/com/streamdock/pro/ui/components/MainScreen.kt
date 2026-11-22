@@ -61,6 +61,9 @@ fun MainScreen(
     onFetchObsScenes: () -> Unit,
     onSwitchToScene: (String) -> Unit,
     onQuickAction: (actionType: String, actionValue: String) -> Unit = { _, _ -> },
+    processes: List<com.streamdock.pro.network.dto.ProcessItem> = emptyList(),
+    onFetchProcesses: () -> Unit = {},
+    onKillProcess: (Long) -> Unit = {},
 ) {
     var selectedRoute by rememberSaveable { mutableStateOf(NavItem.Panel.route) }
     var isEditMode by rememberSaveable { mutableStateOf(false) }
@@ -74,6 +77,7 @@ fun MainScreen(
         NavItem.Panel.route -> NavItem.Panel
         NavItem.Aplicaciones.route -> NavItem.Aplicaciones
         NavItem.OBS.route -> NavItem.OBS
+        NavItem.Tareas.route -> NavItem.Tareas
         NavItem.Config.route -> NavItem.Config
         else -> NavItem.Panel
     }
@@ -115,6 +119,14 @@ fun MainScreen(
                     scenes = obsScenes,
                     onFetchScenes = onFetchObsScenes,
                     onSwitchToScene = onSwitchToScene,
+                )
+            }
+            NavItem.Tareas.route -> {
+                TaskManagerScreen(
+                    connectionState = connectionState,
+                    processes = processes,
+                    onFetchProcesses = onFetchProcesses,
+                    onKillProcess = onKillProcess,
                 )
             }
             NavItem.Config.route -> {

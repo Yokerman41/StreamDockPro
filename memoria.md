@@ -85,3 +85,15 @@ Se reemplazó la lista desplegable técnica por una matriz visual de **8 Categor
 - **Repositorio GitHub**: `https://github.com/Yokerman41/StreamDockPro` (ramas `main` y `gh-pages`).
 - **Página Web Local y GitHub Pages (`index.html`)**:
   - Incluye demostración interactiva de los botones y de las barras verticales deslizantes de volumen (`🔊 PC` y `🟢 SPO`), documentación visual de las 8 categorías, arquitectura y botones de descarga directa para `StreamDockPro_Instalador.exe`, `StreamDockPro.apk` y `StreamDockPro.exe`.
+
+---
+
+### Fase 7: Administrador de Tareas Remoto de Windows en la App Android (`Tareas`)
+1. **Nueva Pestaña en la Barra Inferior y Riel Lateral**:
+   - Integrada entre **`OBS Studio`** y **`Conexión`**: `Panel Deck` | `Quick Deck` | `OBS Studio` | `Tareas` | `Conexión`.
+   - Pantalla [`TaskManagerScreen.kt`](file:///C:/Users/yorke/Downloads/stream%20dock%20pro%20nuevo/app/app/src/main/java/com/streamdock/pro/ui/components/TaskManagerScreen.kt) con diseño obsidian, contador de apps con ventana y procesos totales, barra de búsqueda en vivo y selector de filtros (`Apps con Ventana` vs `Todos los Procesos`).
+2. **Monitoreo en Tiempo Real de Procesos de Windows**:
+   - Títulos reales de ventanas visibles (ej. `"YouTube - Google Chrome"`, `"OBS Studio 30.2"`), nombre del ejecutable (ej. `chrome.exe`, `obs64.exe`), identificador PID y consumo exacto de memoria RAM en Megabytes (`MB`).
+3. **Finalización Remota de Procesos (`kill_process`)**:
+   - Botón directo `Finalizar` con diálogo modal de confirmación de seguridad y retroalimentación háptica.
+   - Motor en Rust (`task_manager.rs`) que ejecuta terminación limpia con `OpenProcess` + `TerminateProcess` y fallback `taskkill /F /PID`, retornando de inmediato la lista actualizada sin retraso.

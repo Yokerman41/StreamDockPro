@@ -96,3 +96,12 @@ Tanto en el panel derecho del **Editor de PC (`MainWindow.xaml`)** como en el mo
   - Compila y exporta `dist/Android/StreamDockPro.apk` (y copia en el Escritorio) e instala directamente por ADB si hay un dispositivo conectado.
 - **Página Web Oficial Interactiva (`index.html` y GitHub Pages)**:
   - Landing page moderna en `index.html` con simulador interactivo en vivo de la consola Stream Dock y de las barras deslizantes verticales de volumen (`🔊 PC` y `🟢 SPO`), enlaces de descarga directa y flujo de publicación automática en `.github/workflows/pages.yml`.
+
+---
+
+## 7. Administrador de Tareas de Windows Integrado en la App Android (`TaskManagerScreen.kt`)
+- **Ubicación en Navegación**: Integrado como pestaña intermedia entre **`OBS Studio`** y **`Conexión`** (`Panel Deck` | `Quick Deck` | `OBS Studio` | `Tareas` | `Conexión`).
+- **Visualización en Tiempo Real**: Lista dinámica de todos los procesos y programas en ejecución en Windows, con diferenciación automática entre aplicaciones con ventana abierta y procesos de fondo.
+- **Información Detallada por Proceso**: Título real de la ventana activa, nombre del ejecutable (`.exe`), PID de Windows y memoria RAM en Megabytes (`MB`) con badges cromáticos.
+- **Búsqueda y Filtros**: Buscador instantáneo por nombre/PID/título y filtros de 1 toque (`Apps con Ventana` vs `Todos los Procesos`).
+- **Finalización Remota de Procesos**: Botón `Finalizar` que invoca `kill_process` en el servidor Rust mediante `OpenProcess` + `TerminateProcess` / `taskkill /F /PID`, con diálogo de confirmación de seguridad.

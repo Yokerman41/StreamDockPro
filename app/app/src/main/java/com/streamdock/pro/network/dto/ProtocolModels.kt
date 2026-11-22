@@ -1,6 +1,7 @@
 package com.streamdock.pro.network.dto
 
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
 
 data class WsEnvelope(
     val type: String,
@@ -20,6 +21,11 @@ object MessageTypes {
     // OBS Specific
     const val OBS_GET_SCENES = "obs_get_scenes"
     const val OBS_SCENES_LIST = "obs_scenes_list"
+
+    // Task Manager Specific
+    const val GET_PROCESSES = "get_processes"
+    const val PROCESS_LIST = "process_list"
+    const val KILL_PROCESS = "kill_process"
 }
 
 data class ActionTriggerPayload(
@@ -28,4 +34,15 @@ data class ActionTriggerPayload(
     val position: Int,
     val actionType: String,
     val actionValue: String
+)
+
+data class ProcessItem(
+    val pid: Long,
+    val name: String,
+    @SerializedName("window_title")
+    val windowTitle: String? = null,
+    @SerializedName("memory_mb")
+    val memoryMb: Long = 0,
+    @SerializedName("is_app")
+    val isApp: Boolean = false
 )

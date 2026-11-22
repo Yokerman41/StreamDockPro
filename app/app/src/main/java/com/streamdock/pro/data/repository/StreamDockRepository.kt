@@ -14,6 +14,7 @@ import com.streamdock.pro.data.models.Profile
 import com.streamdock.pro.data.models.Workspace
 import com.streamdock.pro.network.dto.ActionTriggerPayload
 import com.streamdock.pro.network.dto.MessageTypes
+import com.streamdock.pro.network.dto.ProcessItem
 import com.streamdock.pro.network.dto.WsEnvelope
 import com.streamdock.pro.network.websocket.WebSocketClient
 import com.streamdock.pro.network.websocket.WebSocketClient.ConnectionState
@@ -49,6 +50,9 @@ class StreamDockRepository(
 
     private val _obsScenes = MutableStateFlow<List<String>>(emptyList())
     val obsScenes: StateFlow<List<String>> = _obsScenes.asStateFlow()
+
+    private val _processes = MutableStateFlow<List<ProcessItem>>(emptyList())
+    val processes: StateFlow<List<ProcessItem>> = _processes.asStateFlow()
 
     private val gson = GsonProvider.gson
     private val dao = database.workspaceDao()
@@ -397,6 +401,16 @@ class StreamDockRepository(
                     }
                     _obsScenes.value = scenes.orEmpty()
                 }
+
+                MessageTypes.PROCESS_LIST -> {
+                    val procJson = payload.get("processes")
+                    val list = if (procJson != null && procJson.isJsonArray) {
+                        gson.fromJson(procJson, Array<ProcessItem?>::class.java)?.filterNotNull()
+                    } else {
+                        null
+                    }
+                    _processes.value = list.orEmpty()
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error procesando mensaje '$type'", e)
@@ -550,6 +564,28 @@ class StreamDockRepository(
             uuid = clientUuid,
             timestamp = System.currentTimeMillis(),
             payload = JsonObject(),
+        )
+        webSocketClient?.sendEnvelope(envelope)
+    }
+
+    fun requestProcesses() {
+        val envelope = WsEnvelope(
+            type = MessageTypes.GET_PROCESSES,
+            uuid = clientUuid,
+            timestamp = System.currentTimeMillis(),
+            payload = JsonObject(),
+        )
+        webSocketClient?.sendEnvelope(envelope)
+    }
+
+    fun killProcess(pid: Long) {
+        val envelope = WsEnvelope(
+            type = MessageTypes.KILL_PROCESS,
+            uuid = clientUuid,
+            timestamp = System.currentTimeMillis(),
+            payload = JsonObject().apply {
+                addProperty("pid", pid)
+            },
         )
         webSocketClient?.sendEnvelope(envelope)
     }

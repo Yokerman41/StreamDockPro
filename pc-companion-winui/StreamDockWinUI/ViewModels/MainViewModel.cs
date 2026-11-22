@@ -1483,6 +1483,25 @@ namespace StreamDockWinUI.ViewModels
                 {
                     LockWorkStation();
                 }
+                else if (SelectedButton.ActionType == "SYSTEM_COMMAND" && SelectedButton.ActionValue.StartsWith("KILL_PROCESS:"))
+                {
+                    var pidStr = SelectedButton.ActionValue.Substring("KILL_PROCESS:".Length).Trim();
+                    if (int.TryParse(pidStr, out var pid))
+                    {
+                        try
+                        {
+                            var proc = Process.GetProcessById(pid);
+                            proc.Kill();
+                            StatusMessage = $"✓ Proceso '{proc.ProcessName}' (PID {pid}) finalizado";
+                            return;
+                        }
+                        catch (Exception ex)
+                        {
+                            StatusMessage = $"⚠️ Error al finalizar proceso: {ex.Message}";
+                            return;
+                        }
+                    }
+                }
                 else if (SelectedButton.ActionType == "LAUNCH_APP")
                 {
                     var processInfo = new ProcessStartInfo

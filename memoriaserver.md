@@ -32,6 +32,11 @@ Este documento registra la arquitectura, los componentes implementados y todos l
   - Preservación de imágenes PNG en Base64 (`data:image/png;base64,...`) de alta resolución `256×256` y asignación automática de iconos vectoriales por tipo de acción.
 - **Integración Nativa con OBS WebSocket v5 (`obs_websocket.rs`)**:
   - Autenticación SHA-256 (`salt` + `challenge`), escaneo de escenas (`GetSceneList`) y fuentes (`GetSceneItemList`), cambio de escena, visibilidad de fuentes, mute de micrófono y control de transmisión/grabación.
+- **Motor de Administrador de Tareas de Windows (`plugins/task_manager.rs`)**:
+  - Escaneo nativo ultra-rápido de procesos mediante `CreateToolhelp32Snapshot` y detección de títulos de ventana con `EnumWindows` + `GetWindowTextW`.
+  - Lectura de consumo de memoria RAM por proceso mediante `GetProcessMemoryInfo` (en Megabytes).
+  - Protocolo WebSocket asíncrono con mensajes `get_processes` y `kill_process`.
+  - Terminación segura de procesos por PID (`OpenProcess` + `TerminateProcess` y fallback `taskkill /F /PID`).
 
 ---
 

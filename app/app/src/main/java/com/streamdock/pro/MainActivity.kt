@@ -45,6 +45,7 @@ class MainActivity : ComponentActivity() {
                 val discoveredServers by viewModel.discoveredServers.collectAsState()
                 val isScanning by viewModel.isScanning.collectAsState()
                 val obsScenes by viewModel.obsScenes.collectAsState()
+                val processes by viewModel.processes.collectAsState()
 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen(
@@ -68,6 +69,9 @@ class MainActivity : ComponentActivity() {
                         onFetchObsScenes = viewModel::fetchObsScenes,
                         onSwitchToScene = viewModel::switchToScene,
                         onQuickAction = viewModel::triggerQuickAction,
+                        processes = processes,
+                        onFetchProcesses = viewModel::fetchProcesses,
+                        onKillProcess = viewModel::killProcess,
                     )
                 }
             }

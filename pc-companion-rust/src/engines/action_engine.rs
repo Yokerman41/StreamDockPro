@@ -17,6 +17,11 @@ impl ActionEngine {
                 Win32InputPlugin::send_media_key(action_value)
             }
             "SYSTEM_COMMAND" => {
+                if let Some(pid_str) = action_value.strip_prefix("KILL_PROCESS:") {
+                    if let Ok(pid) = pid_str.trim().parse::<u32>() {
+                        return crate::plugins::task_manager::TaskManagerPlugin::kill_process(pid);
+                    }
+                }
                 Win32InputPlugin::execute_system_command(action_value)
             }
             "KEYBOARD_HOTKEY" => {
