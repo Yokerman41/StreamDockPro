@@ -159,21 +159,25 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Center Grid Canvas (4x5 Dynamic Grid with Drag & Drop & Icon Display) -->
+                <!-- Center Grid Canvas (4x5 Dynamic Grid + Espacio Dedicado de Barras de Volumen del Perfil) -->
                 <Border Grid.Column="1" Background="#181825" CornerRadius="10" Padding="20" Margin="0,0,12,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        
-                        <DockPanel Grid.Row="0" Margin="0,0,0,15">
-                            <TextBlock Text="CUADRÍCULA TÁCTIL (4x5)" FontWeight="Bold" Foreground="#A6ADC8" VerticalAlignment="Center"/>
-                            <TextBlock Text="💡 Arrastra botones para reordenarlos o suelta archivos .exe/.lnk" Foreground="#6C7086" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <DockPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,15">
+                            <TextBlock Text="CUADRÍCULA TÁCTIL DEL PERFIL (4x5)" FontWeight="Bold" Foreground="#A6ADC8" VerticalAlignment="Center"/>
+                            <TextBlock Text="💡 Arrastra botones para reordenarlos o agrega Barras de Volumen al Perfil" Foreground="#6C7086" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </DockPanel>
                         
                         <!-- Reactive 4x5 Button Grid -->
-                        <ItemsControl Grid.Row="1" ItemsSource="{Binding GridButtons}">
+                        <ItemsControl Grid.Row="1" Grid.Column="0" ItemsSource="{Binding GridButtons}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <UniformGrid Rows="4" Columns="5"/>
@@ -219,584 +223,916 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+                        <!-- ESPACIO DEDICADO DE BARRAS DE VOLUMEN DENTRO DEL PERFIL -->
+                        <Border Grid.Row="1" Grid.Column="1" Background="#13141F" CornerRadius="12" Padding="10" Margin="12,4,0,4"
+                                BorderThickness="1.5" BorderBrush="#313244">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Top" Text="🎚️ VOLUMEN" FontWeight="ExtraBold" Foreground="#89B4FA"
+                                           FontSize="10" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                                <!-- Botones de activación rápida cuando aún no hay barras activas en este perfil -->
+                                <StackPanel Width="94" VerticalAlignment="Center">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasAnyProfileVolumeBar}" Value="False">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Text="Agrega barras deslizantes verticales a este perfil:"
+                                               Foreground="#A6ADC8" FontSize="9.5" TextWrapping="Wrap"
+                                               TextAlignment="Center" Margin="0,0,0,10"/>
+                                    <Border Background="#2A2044" CornerRadius="8" Padding="6,8" Margin="0,0,0,8"
+                                            BorderThickness="1.5" BorderBrush="#CBA6F7">
+                                        <Button Command="{Binding TogglePcVolumeBarInProfileCommand}"
+                                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="🔊 + Barra PC" FontWeight="Bold" Foreground="#CBA6F7" FontSize="10.5" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Volumen Maestro" Foreground="#A6ADC8" FontSize="8.5" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                    <Border Background="#113022" CornerRadius="8" Padding="6,8"
+                                            BorderThickness="1.5" BorderBrush="#1DB954">
+                                        <Button Command="{Binding ToggleSpotifyVolumeBarInProfileCommand}"
+                                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="🟢 + Spotify" FontWeight="Bold" Foreground="#1DB954" FontSize="10.5" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Volumen Exclusivo" Foreground="#A6ADC8" FontSize="8.5" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Botones compactos en la parte inferior para activar la segunda barra cuando solo 1 está activa -->
+                                <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                                    <Border Background="#2A2044" CornerRadius="6" Padding="6,4" Margin="0,2"
+                                            BorderThickness="1" BorderBrush="#CBA6F7">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding HasAnyProfileVolumeBar}" Value="True"/>
+                                                            <Condition Binding="{Binding HasPcVolumeBarInProfile}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Button Content="🔊 + Barra PC" Command="{Binding TogglePcVolumeBarInProfileCommand}"
+                                                Background="Transparent" Foreground="#CBA6F7" FontWeight="Bold" FontSize="9.5"
+                                                BorderThickness="0" Cursor="Hand"/>
+                                    </Border>
+                                    <Border Background="#113022" CornerRadius="6" Padding="6,4" Margin="0,2"
+                                            BorderThickness="1" BorderBrush="#1DB954">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding HasAnyProfileVolumeBar}" Value="True"/>
+                                                            <Condition Binding="{Binding HasSpotifyVolumeBarInProfile}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Button Content="🟢 + Barra Spotify" Command="{Binding ToggleSpotifyVolumeBarInProfileCommand}"
+                                                Background="Transparent" Foreground="#1DB954" FontWeight="Bold" FontSize="9.5"
+                                                BorderThickness="0" Cursor="Hand"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <!-- Barra Vertical de Volumen Maestro PC -->
+                                    <Border Background="#1E1B2E" CornerRadius="10" Padding="8,8" Margin="3,0"
+                                            BorderThickness="1.5" BorderBrush="#CBA6F7" Width="64">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasPcVolumeBarInProfile}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <DockPanel Grid.Row="0" Margin="0,0,0,2">
+                                                <TextBlock Text="🔊 PC" FontWeight="Bold" Foreground="#CBA6F7" FontSize="10" VerticalAlignment="Center"/>
+                                                <Button Content="✕" Command="{Binding RemovePcVolumeBarFromProfileCommand}"
+                                                        ToolTip="Quitar barra de volumen PC de este perfil"
+                                                        Background="Transparent" Foreground="#6C7086" BorderThickness="0"
+                                                        FontSize="9" Padding="2,0" HorizontalAlignment="Right" Cursor="Hand"/>
+                                            </DockPanel>
+
+                                            <TextBlock Grid.Row="1" Text="{Binding PcVolumeLevel, StringFormat='{}{0}%'}"
+                                                       Foreground="White" FontWeight="ExtraBold" FontSize="12"
+                                                       HorizontalAlignment="Center" Margin="0,2,0,8"/>
+
+                                            <Slider Grid.Row="2" Orientation="Vertical" Minimum="0" Maximum="100"
+                                                    Value="{Binding PcVolumeLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                                    IsMoveToPointEnabled="True" Cursor="Hand"
+                                                    ToolTip="Desliza de arriba a abajo para subir o bajar el volumen maestro de la PC"/>
+
+                                            <Button Grid.Row="3" Content="🔇" Command="{Binding MutePcFromBarCommand}"
+                                                    ToolTip="Silenciar / Activar Audio Maestro de PC"
+                                                    Background="#313244" Foreground="#F38BA8" BorderThickness="0"
+                                                    Padding="6,4" Margin="0,8,0,0" Cursor="Hand"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Barra Vertical de Volumen Exclusivo Spotify -->
+                                    <Border Background="#11241B" CornerRadius="10" Padding="8,8" Margin="3,0"
+                                            BorderThickness="1.5" BorderBrush="#1DB954" Width="64">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasSpotifyVolumeBarInProfile}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <DockPanel Grid.Row="0" Margin="0,0,0,2">
+                                                <TextBlock Text="🟢 SPO" FontWeight="Bold" Foreground="#1DB954" FontSize="10" VerticalAlignment="Center"/>
+                                                <Button Content="✕" Command="{Binding RemoveSpotifyVolumeBarFromProfileCommand}"
+                                                        ToolTip="Quitar barra de volumen de Spotify de este perfil"
+                                                        Background="Transparent" Foreground="#6C7086" BorderThickness="0"
+                                                        FontSize="9" Padding="2,0" HorizontalAlignment="Right" Cursor="Hand"/>
+                                            </DockPanel>
+
+                                            <TextBlock Grid.Row="1" Text="{Binding SpotifyVolumeLevel, StringFormat='{}{0}%'}"
+                                                       Foreground="White" FontWeight="ExtraBold" FontSize="12"
+                                                       HorizontalAlignment="Center" Margin="0,2,0,8"/>
+
+                                            <Slider Grid.Row="2" Orientation="Vertical" Minimum="0" Maximum="100"
+                                                    Value="{Binding SpotifyVolumeLevel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                                    IsMoveToPointEnabled="True" Cursor="Hand"
+                                                    ToolTip="Desliza de arriba a abajo para subir o bajar el volumen exclusivo de Spotify"/>
+
+                                            <Button Grid.Row="3" Content="🔇" Command="{Binding MuteSpotifyFromBarCommand}"
+                                                    ToolTip="Silenciar / Activar solo Spotify"
+                                                    Background="#1B3829" Foreground="#1DB954" BorderThickness="0"
+                                                    Padding="6,4" Margin="0,8,0,0" Cursor="Hand"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
                     </Grid>
                 </Border>
 
-                <!-- Right Action Configuration Panel -->
-                <Border Grid.Column="2" Background="#181825" CornerRadius="10" Padding="15">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <TextBlock Text="CONFIGURAR BOTÓN" FontWeight="Bold" Foreground="#89B4FA" FontSize="14" Margin="0,0,0,15"/>
-                            
-                            <!-- Icon Preview Card -->
-                            <Border Background="#1E1E2E" CornerRadius="10" Padding="12" Margin="0,0,0,15" HorizontalAlignment="Center" Width="90" Height="90">
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                    <Image Source="{Binding SelectedButton.IconImage}" Width="44" Height="44"
-                                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                                    <TextBlock Text="Vista Previa" Foreground="#A6ADC8" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                <!-- Right Action Configuration Panel (3-Zone Stream Deck Layout) -->
+                <Border Grid.Column="2" Background="#181825" CornerRadius="10" Padding="14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- ZONA 1: CABECERA COMPACTA (Vista Previa + Etiqueta + Paleta de Colores en 1 Clic) -->
+                        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                            <TextBlock Text="CONFIGURAR BOTÓN" FontWeight="Bold" Foreground="#89B4FA" FontSize="13" Margin="0,0,0,10"/>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="68"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Mini Preview Tile -->
+                                <Border Grid.Column="0" Background="{Binding SelectedButton.BackgroundColor}" CornerRadius="10"
+                                        Width="62" Height="62" HorizontalAlignment="Left" BorderThickness="1.5" BorderBrush="#45475A">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <Image Source="{Binding SelectedButton.IconImage}" Width="34" Height="34"
+                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        <TextBlock Text="{Binding SelectedButton.Label}" Foreground="White" FontSize="8"
+                                                   FontWeight="Bold" TextTrimming="CharacterEllipsis" MaxWidth="54"
+                                                   HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Label + Quick Color Swatches -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                                    <TextBlock Text="Etiqueta del Botón:" Foreground="#A6ADC8" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding SelectedButton.Label, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="#313244" Foreground="White" BorderThickness="0" Padding="7,5" Margin="0,0,0,6"/>
+
+                                    <!-- Paleta de Colores en 1 Clic -->
+                                    <UniformGrid Columns="8" Height="20">
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#1E1E2E" Background="#1E1E2E" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Oscuro"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#2196F3" Background="#2196F3" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Azul"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#1DB954" Background="#1DB954" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Verde Spotify"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#9B59B6" Background="#9B59B6" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Violeta"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#E74C3C" Background="#E74C3C" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Rojo"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#E67E22" Background="#E67E22" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Naranja"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#4F46E5" Background="#4F46E5" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Índigo"/>
+                                        <Button Command="{Binding SelectColorPresetCommand}" CommandParameter="#34495E" Background="#34495E" BorderBrush="#45475A" BorderThickness="1" Margin="1" Cursor="Hand" ToolTip="Gris Acero"/>
+                                    </UniformGrid>
                                 </StackPanel>
-                            </Border>
+                            </Grid>
 
-                            <!-- Label Configuration -->
-                            <TextBlock Text="Etiqueta del Botón:" Foreground="#CDD6F4" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedButton.Label, UpdateSourceTrigger=PropertyChanged}" 
-                                     Background="#313244" Foreground="White" BorderThickness="0" Padding="8" Margin="0,0,0,15"/>
-
-                            <!-- Action Type Category Selector Buttons -->
-                            <TextBlock Text="Tipo de Acción:" Foreground="#CDD6F4" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <UniformGrid Columns="2" Margin="0,0,0,15">
+                            <!-- SELECTOR DE 8 CATEGORÍAS CLARAS ("TIPO DE ACCIÓN") -->
+                            <TextBlock Text="TIPO DE ACCIÓN:" Foreground="#A6ADC8" FontSize="10" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <UniformGrid Columns="2">
+                                <!-- 1. Audio PC -->
                                 <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="Background" Value="#262738"/>
                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="MEDIA_CONTROL">
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="AUDIO_PC">
                                                     <Setter Property="Background" Value="#3B2E58"/>
                                                     <Setter Property="BorderBrush" Value="#CBA6F7"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Content="🎵 Multimedia" Command="{Binding SelectActionTypeCommand}" CommandParameter="MEDIA_CONTROL"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
+                                    <Button Content="🎵 Audio PC" Command="{Binding SelectActionTypeCommand}" CommandParameter="AUDIO_PC"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
+
+                                <!-- 2. Spotify -->
                                 <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="Background" Value="#262738"/>
                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="LAUNCH_APP">
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="SPOTIFY">
+                                                    <Setter Property="Background" Value="#143323"/>
+                                                    <Setter Property="BorderBrush" Value="#1DB954"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Button Content="🟢 Spotify" Command="{Binding SelectActionTypeCommand}" CommandParameter="SPOTIFY"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
+                                </Border>
+
+                                <!-- 3. Abrir App -->
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#262738"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="LAUNCH_APP">
                                                     <Setter Property="Background" Value="#1E3A5F"/>
                                                     <Setter Property="BorderBrush" Value="#89B4FA"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Content="🚀 Aplicación" Command="{Binding SelectActionTypeCommand}" CommandParameter="LAUNCH_APP"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
+                                    <Button Content="🚀 Abrir App" Command="{Binding SelectActionTypeCommand}" CommandParameter="LAUNCH_APP"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
+
+                                <!-- 4. Ventanas -->
                                 <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="Background" Value="#262738"/>
                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="KEYBOARD_HOTKEY">
-                                                    <Setter Property="Background" Value="#2A3B4C"/>
-                                                    <Setter Property="BorderBrush" Value="#F9E2AF"/>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="WINDOWS">
+                                                    <Setter Property="Background" Value="#1A3A4A"/>
+                                                    <Setter Property="BorderBrush" Value="#38BDF8"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Content="⌨️ Atajo Win32" Command="{Binding SelectActionTypeCommand}" CommandParameter="KEYBOARD_HOTKEY"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
+                                    <Button Content="🪟 Ventanas" Command="{Binding SelectActionTypeCommand}" CommandParameter="WINDOWS"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
+
+                                <!-- 5. OBS Studio -->
                                 <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="Background" Value="#262738"/>
                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="OBS_SCENE_SWITCH">
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="OBS_SCENE_SWITCH">
                                                     <Setter Property="Background" Value="#1B3B48"/>
                                                     <Setter Property="BorderBrush" Value="#89DCEB"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Content="🎥 OBS" Command="{Binding SelectActionTypeCommand}" CommandParameter="OBS_SCENE_SWITCH"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
+                                    <Button Content="🎥 OBS Studio" Command="{Binding SelectActionTypeCommand}" CommandParameter="OBS_SCENE_SWITCH"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
+
+                                <!-- 6. Atajo Teclado -->
                                 <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="Background" Value="#262738"/>
                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="STREAMER_BOT_ACTION">
-                                                    <Setter Property="Background" Value="#1E3B2E"/>
-                                                    <Setter Property="BorderBrush" Value="#A6E3A1"/>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="KEYBOARD_HOTKEY">
+                                                    <Setter Property="Background" Value="#3D321E"/>
+                                                    <Setter Property="BorderBrush" Value="#F9E2AF"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Content="🤖 Streamer.bot" Command="{Binding SelectActionTypeCommand}" CommandParameter="STREAMER_BOT_ACTION"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
+                                    <Button Content="⌨️ Atajo Teclado" Command="{Binding SelectActionTypeCommand}" CommandParameter="KEYBOARD_HOTKEY"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
+
+                                <!-- 7. Cambiar Página -->
                                 <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="Background" Value="#262738"/>
                                             <Setter Property="BorderBrush" Value="Transparent"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="SYSTEM_COMMAND">
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="NAVIGATE">
+                                                    <Setter Property="Background" Value="#28255A"/>
+                                                    <Setter Property="BorderBrush" Value="#818CF8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Button Content="📄 Ir a Página" Command="{Binding SelectActionTypeCommand}" CommandParameter="NAVIGATE"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
+                                </Border>
+
+                                <!-- 8. Sistema -->
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#262738"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="SYSTEM_COMMAND">
                                                     <Setter Property="Background" Value="#4A2533"/>
                                                     <Setter Property="BorderBrush" Value="#F38BA8"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Button Content="⚙️ Sistema" Command="{Binding SelectActionTypeCommand}" CommandParameter="SYSTEM_COMMAND"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
+                                    <Button Content="⚙️ Sistema PC" Command="{Binding SelectActionTypeCommand}" CommandParameter="SYSTEM_COMMAND"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
                             </UniformGrid>
+                        </StackPanel>
 
-                            <!-- Sub-Menu Card Options for KEYBOARD_HOTKEY (Grabador Interactivo de Teclas) -->
-                            <StackPanel Margin="0,5,0,15">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="KEYBOARD_HOTKEY">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
+                        <!-- ZONA 2: CATÁLOGO DE ACCIONES EN CUADRÍCULA COMPACTA (2 Columnas) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,2,0,8">
+                            <StackPanel>
 
-                                <TextBlock Text="GRABADOR INTERACTIVO DE ATAJOS" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,0,0,8"/>
-                                <Border CornerRadius="8" Padding="10" Margin="0,0,0,8" BorderThickness="1.5">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#212234"/>
-                                            <Setter Property="BorderBrush" Value="#313244"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsRecordingHotkey}" Value="True">
-                                                    <Setter Property="Background" Value="#4A1E2B"/>
-                                                    <Setter Property="BorderBrush" Value="#F38BA8"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Button Command="{Binding ToggleHotkeyRecordingCommand}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Center" Cursor="Hand">
-                                        <StackPanel HorizontalAlignment="Center">
-                                            <TextBlock FontWeight="Bold" FontSize="12" HorizontalAlignment="Center">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="🔴 Grabar Combinación de Teclas"/>
-                                                        <Setter Property="Foreground" Value="#F9E2AF"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsRecordingHotkey}" Value="True">
-                                                                <Setter Property="Text" Value="⌨️ ¡Presiona tus teclas ahora! (ESC cancela)"/>
-                                                                <Setter Property="Foreground" Value="#F38BA8"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBlock Text="Haz clic aquí y pulsa ej. Ctrl + Shift + M en tu teclado" Foreground="#A6ADC8" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Border>
-                            </StackPanel>
-
-                            <!-- Sub-Menu Card Options for MEDIA_CONTROL -->
-                            <StackPanel Margin="0,5,0,15">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="MEDIA_CONTROL">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-
-                                <TextBlock Text="TARJETAS MULTIMEDIA" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,0,0,8"/>
-                                <UniformGrid Columns="1">
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="PLAY_PAUSE"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="⏯️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Play / Pausa" FontWeight="Bold" Foreground="White"/>
-                                                    <TextBlock Text="Reproducir o pausar audio / video" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_MUTE"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🔇" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Silenciar Audio" FontWeight="Bold" Foreground="#F38BA8"/>
-                                                    <TextBlock Text="Mutea o desmutea el sonido de Windows" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_UP"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🔊" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Subir Volumen" FontWeight="Bold" Foreground="#A6E3A1"/>
-                                                    <TextBlock Text="Aumenta el nivel de audio principal" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_DOWN"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🔉" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Bajar Volumen" FontWeight="Bold" Foreground="#FAB387"/>
-                                                    <TextBlock Text="Disminuye el nivel de audio principal" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="NEXT_TRACK"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="⏭️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Pista Siguiente" FontWeight="Bold" Foreground="#89B4FA"/>
-                                                    <TextBlock Text="Avanza a la siguiente canción" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="PREV_TRACK"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="⏮️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Pista Anterior" FontWeight="Bold" Foreground="#89B4FA"/>
-                                                    <TextBlock Text="Regresa a la canción previa" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-                                </UniformGrid>
-
-                                <!-- Controles Exclusivos de Spotify (Solo visibles si Spotify está instalado en la PC) -->
-                                <StackPanel Margin="0,12,0,0">
+                                <!-- ==================== 1. AUDIO PC ==================== -->
+                                <StackPanel>
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
-                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsSpotifyInstalled}" Value="False">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="AUDIO_PC">
+                                                    <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
 
-                                    <TextBlock Text="🟢 MULTIMEDIA EXCLUSIVO PARA SPOTIFY" FontWeight="Bold" Foreground="#1DB954" FontSize="11" Margin="0,0,0,8"/>
-                                    <UniformGrid Columns="1">
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_PLAY_PAUSE"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="⏯️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Play / Pausa" FontWeight="Bold" Foreground="#1DB954"/>
-                                                        <TextBlock Text="Controla solo Spotify en 2do plano (no afecta navegadores)" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                    <TextBlock Text="CONTROLES DE AUDIO GENERAL DE WINDOWS" FontWeight="Bold" Foreground="#CBA6F7" FontSize="10" Margin="0,0,0,6"/>
+                                    <UniformGrid Columns="2">
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="PLAY_PAUSE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏯️" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Play / Pausa" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Audio / Video global" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
-
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_NEXT"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="⏭️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Pista Siguiente" FontWeight="Bold" Foreground="#A6E3A1"/>
-                                                        <TextBlock Text="Avanza a la siguiente canción exclusivamente en Spotify" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_MUTE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔇" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Silenciar PC" FontWeight="Bold" Foreground="#F38BA8" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Mutea todo Windows" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
-
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_PREV"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="⏮️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Pista Anterior" FontWeight="Bold" Foreground="#A6E3A1"/>
-                                                        <TextBlock Text="Regresa a la canción previa exclusivamente en Spotify" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_UP" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔊" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Subir Volumen" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Volumen maestro +" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
-
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_VOL_UP"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="🔊" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Subir Volumen" FontWeight="Bold" Foreground="#A6E3A1"/>
-                                                        <TextBlock Text="Sube solo el volumen de Spotify en el mezclador" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_DOWN" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔉" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Bajar Volumen" FontWeight="Bold" Foreground="#FAB387" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Volumen maestro -" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
-
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_VOL_DOWN"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="🔉" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Bajar Volumen" FontWeight="Bold" Foreground="#FAB387"/>
-                                                        <TextBlock Text="Baja solo el volumen de Spotify en el mezclador" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="PREV_TRACK" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏮️" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Pista Anterior" FontWeight="Bold" Foreground="#89B4FA" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Canción previa" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
-
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_MUTE"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="🔇" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Silenciar Audio" FontWeight="Bold" Foreground="#F38BA8"/>
-                                                        <TextBlock Text="Mutea solo Spotify sin silenciar juegos ni Windows" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="NEXT_TRACK" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏭️" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Pista Siguiente" FontWeight="Bold" Foreground="#89B4FA" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Siguiente canción" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
+                                    </UniformGrid>
+                                    <Border Background="#2A2044" CornerRadius="8" Margin="3" Padding="9" BorderThickness="1.5" BorderBrush="#CBA6F7">
+                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_SLIDER_PC" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="🎚️ Barra Deslizante de Volumen PC (En el Perfil)" FontWeight="Bold" Foreground="#CBA6F7" FontSize="11" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Crea un espacio con barra vertical para deslizar de arriba a abajo el volumen" Foreground="#CDD6F4" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
 
-                                        <Border Background="#182B22" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#1DB954">
-                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_OPEN"
-                                                    Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                                <DockPanel>
-                                                    <TextBlock Text="🎧" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="Spotify: Abrir / Mostrar" FontWeight="Bold" Foreground="White"/>
-                                                        <TextBlock Text="Inicia Spotify o trae su ventana al frente" Foreground="#A6ADC8" FontSize="10"/>
-                                                    </StackPanel>
-                                                </DockPanel>
+                                <!-- ==================== 2. SPOTIFY EXCLUSIVO ==================== -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="SPOTIFY">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="🟢 CONTROL EXCLUSIVO DE SPOTIFY (EN 2DO PLANO)" FontWeight="Bold" Foreground="#1DB954" FontSize="10" Margin="0,0,0,6"/>
+                                    <UniformGrid Columns="2">
+                                        <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#1DB954">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_PLAY_PAUSE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏯️" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Play / Pausa" FontWeight="Bold" Foreground="#1DB954" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Solo Spotify" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#1DB954">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_OPEN" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🎧" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Abrir Spotify" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Mostrar ventana" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#1DB954">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_PREV" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏮️" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Anterior" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Canción previa" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#1DB954">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_NEXT" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="⏭️" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Siguiente" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="Siguiente pista" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#1DB954">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_VOL_UP" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔊" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Spotify Vol +" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="No sube juegos/PC" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#1DB954">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_VOL_DOWN" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔉" FontSize="18" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Spotify Vol -" FontWeight="Bold" Foreground="#FAB387" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="No baja juegos/PC" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                    </UniformGrid>
+                                    <Border Background="#113022" CornerRadius="8" Margin="3" Padding="9" BorderThickness="1.5" BorderBrush="#1DB954">
+                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_SLIDER_SPOTIFY" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="🎚️ Barra Deslizante de Volumen Spotify (En el Perfil)" FontWeight="Bold" Foreground="#1DB954" FontSize="11" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Crea un espacio con barra vertical para deslizar de arriba a abajo el volumen" Foreground="#CDD6F4" FontSize="9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                    <Border Background="#152820" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#F38BA8">
+                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SPOTIFY_MUTE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <TextBlock Text="🔇 " FontSize="15" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Silenciar Solo Spotify (Sin mutear juegos ni Windows)" FontWeight="Bold" Foreground="#F38BA8" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- ==================== 3. ABRIR APLICACIÓN ==================== -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="LAUNCH_APP">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="LANZAR PROGRAMA O ACCESO DIRECTO" FontWeight="Bold" Foreground="#89B4FA" FontSize="10" Margin="0,0,0,6"/>
+                                    <Border Background="#89B4FA" CornerRadius="8" Margin="0,2,0,8" Padding="10">
+                                        <Button Command="{Binding BrowseFileCommand}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
+                                            <DockPanel>
+                                                <TextBlock Text="📁" FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="Seleccionar Programa (.exe / .lnk)" FontWeight="Bold" Foreground="#11111B" FontSize="12"/>
+                                                    <TextBlock Text="Extrae automáticamente el icono en alta resolución 256x256" Foreground="#1E1E2E" FontSize="9.5"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Button>
+                                    </Border>
+                                    <TextBlock Text="💡 Tip: También puedes arrastrar cualquier icono desde tu Escritorio directamente sobre un botón de la cuadrícula." Foreground="#A6ADC8" FontSize="10.5" TextWrapping="Wrap" Margin="2,0,2,4"/>
+                                </StackPanel>
+
+                                <!-- ==================== 4. GESTIÓN DE VENTANAS ==================== -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="WINDOWS">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="CONTROL DE VENTANAS EN PRIMER PLANO" FontWeight="Bold" Foreground="#38BDF8" FontSize="10" Margin="0,0,0,6"/>
+                                    <UniformGrid Columns="2">
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN_MINIMIZE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🗕" FontSize="20" Foreground="#89B4FA" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Minimizar" FontWeight="Bold" Foreground="#89B4FA" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Oculta ventana activa" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN_MAXIMIZE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🗖" FontSize="20" Foreground="#A6E3A1" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Maximizar" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Pantalla completa / Restaurar" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN_CLOSE" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="❌" FontSize="20" Foreground="#F38BA8" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Cerrar Ventana" FontWeight="Bold" Foreground="#F38BA8" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Cierra programa activo" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SHOW_DESKTOP" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🖥️" FontSize="20" Foreground="#CBA6F7" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Ver Escritorio" FontWeight="Bold" Foreground="#CBA6F7" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Minimiza todo (Win+D)" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
                                             </Button>
                                         </Border>
                                     </UniformGrid>
                                 </StackPanel>
-                            </StackPanel>
 
-                            <!-- Sub-Menu Card Options for SYSTEM_COMMAND -->
-                            <StackPanel Margin="0,5,0,15">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="SYSTEM_COMMAND">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-
-                                <TextBlock Text="TARJETAS DE SISTEMA" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,0,0,8"/>
-                                <UniformGrid Columns="1">
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="LOCK_WORKSTATION"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🔒" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Bloquear PC" FontWeight="Bold" Foreground="White"/>
-                                                    <TextBlock Text="Bloquea la sesión de usuario activa" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SHOW_DESKTOP"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🖥️" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Mostrar Escritorio" FontWeight="Bold" Foreground="#89B4FA"/>
-                                                    <TextBlock Text="Minimiza las ventanas abiertas" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SLEEP"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🌙" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Suspender PC" FontWeight="Bold" Foreground="#CBA6F7"/>
-                                                    <TextBlock Text="Pone el equipo en estado de reposo" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SHUTDOWN"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🛑" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Apagar PC" FontWeight="Bold" Foreground="#F38BA8"/>
-                                                    <TextBlock Text="Apaga el sistema de forma segura" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-                                </UniformGrid>
-                            </StackPanel>
-
-                            <!-- Sub-Menu Card Options for LAUNCH_APP -->
-                            <StackPanel Margin="0,5,0,15">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="LAUNCH_APP">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-
-                                <TextBlock Text="SELECCIONAR APLICACIÓN" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,0,0,8"/>
-                                <Border Background="#89B4FA" CornerRadius="8" Margin="0,3" Padding="8">
-                                    <Button Command="{Binding BrowseFileCommand}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                        <DockPanel>
-                                            <TextBlock Text="📁" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Examinar Ejecutable / Acceso Directo" FontWeight="Bold" Foreground="#11111B"/>
-                                                <TextBlock Text="Selecciona un archivo .exe o .lnk en tu PC" Foreground="#313244" FontSize="10"/>
-                                            </StackPanel>
-                                        </DockPanel>
-                                    </Button>
-                                </Border>
-
-                                <TextBlock Text="CONTROL DE VENTANAS" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,12,0,8"/>
-                                <UniformGrid Columns="1">
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN_MINIMIZE"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🗕" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#89B4FA"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Minimizar Ventana" FontWeight="Bold" Foreground="#89B4FA"/>
-                                                    <TextBlock Text="Minimiza la ventana activa en primer plano" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN_MAXIMIZE"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="🗖" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#A6E3A1"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Maximizar / Restaurar Ventana" FontWeight="Bold" Foreground="#A6E3A1"/>
-                                                    <TextBlock Text="Maximiza o restaura la ventana activa en primer plano" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-
-                                    <Border Background="#212234" CornerRadius="8" Margin="0,3" Padding="8" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN_CLOSE"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Cursor="Hand">
-                                            <DockPanel>
-                                                <TextBlock Text="❌" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#F38BA8"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Cerrar Ventana" FontWeight="Bold" Foreground="#F38BA8"/>
-                                                    <TextBlock Text="Cierra la ventana activa en primer plano" Foreground="#A6ADC8" FontSize="10"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Button>
-                                    </Border>
-                                </UniformGrid>
-                            </StackPanel>
-
-                            <!-- Sub-Menu Card Options for OBS_SCENE_SWITCH -->
-                            <StackPanel Margin="0,5,0,15">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="OBS_SCENE_SWITCH">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-
-                                <TextBlock Text="CONFIGURACIÓN WEBSOCKET DE OBS" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,0,0,8"/>
-                                <Border Background="#212234" CornerRadius="8" Padding="10" Margin="0,0,0,10" BorderThickness="1" BorderBrush="#313244">
-                                    <StackPanel>
-                                        <Grid Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*"/>
-                                                <ColumnDefinition Width="1*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                                                <TextBlock Text="Host / IP:" Foreground="#A6ADC8" FontSize="11" Margin="0,0,0,2"/>
-                                                <TextBox Text="{Binding ObsHost, UpdateSourceTrigger=PropertyChanged}" Background="#313244" Foreground="White" BorderThickness="0" Padding="6"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
-                                                <TextBlock Text="Puerto:" Foreground="#A6ADC8" FontSize="11" Margin="0,0,0,2"/>
-                                                <TextBox Text="{Binding ObsPort, UpdateSourceTrigger=PropertyChanged}" Background="#313244" Foreground="White" BorderThickness="0" Padding="6"/>
-                                            </StackPanel>
-                                        </Grid>
-
-                                        <TextBlock Text="Contraseña WebSocket (Opcional):" Foreground="#A6ADC8" FontSize="11" Margin="0,0,0,2"/>
-                                        <TextBox Text="{Binding ObsPassword, UpdateSourceTrigger=PropertyChanged}" Background="#313244" Foreground="White" BorderThickness="0" Padding="6" Margin="0,0,0,10"/>
-
-                                        <!-- Botón de Escanear -->
-                                        <Border Background="#89B4FA" CornerRadius="6">
-                                            <Button Command="{Binding ScanObsWebSocketCommand}" Background="Transparent" Foreground="#11111B" FontWeight="Bold" BorderThickness="0" Padding="8" HorizontalAlignment="Stretch" Cursor="Hand">
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                    <TextBlock Text="🔍 " FontSize="13"/>
-                                                    <TextBlock Text="Escanear Escenas y Fuentes OBS" FontWeight="Bold"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Border>
-
-                                        <!-- Scan Status Text -->
-                                        <TextBlock Text="{Binding ObsScanStatus}" Foreground="#89B4FA" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap" HorizontalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Escenas Detectadas en OBS -->
-                                <StackPanel Margin="0,4,0,8">
+                                <!-- ==================== 5. OBS STUDIO ==================== -->
+                                <StackPanel>
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
-                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HasObsScenes}" Value="False">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="OBS_SCENE_SWITCH">
+                                                    <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
 
-                                    <TextBlock Text="ESCENAS DETECTADAS EN OBS" FontWeight="Bold" Foreground="#89B4FA" FontSize="11" Margin="0,0,0,6"/>
-                                    <ItemsControl ItemsSource="{Binding ObsScenes}">
+                                    <TextBlock Text="ACCIONES RÁPIDAS DE OBS STUDIO" FontWeight="Bold" Foreground="#F9E2AF" FontSize="10" Margin="0,0,0,6"/>
+                                    <UniformGrid Columns="2" Margin="0,0,0,8">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="START_STREAM" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="📡 Iniciar Stream" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11"/>
+                                                    <TextBlock Text="Iniciar / Detener directo" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="START_RECORD" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔴 Grabar OBS" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="Iniciar / Detener grabación" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="TOGGLE_MUTE" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎙️ Mute Mic OBS" FontWeight="Bold" Foreground="#FAB387" FontSize="11"/>
+                                                    <TextBlock Text="Silenciar micrófono OBS" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="Escena Principal" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎬 Escena Principal" FontWeight="Bold" Foreground="White" FontSize="11"/>
+                                                    <TextBlock Text="Cambiar a escena" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                    </UniformGrid>
+
+                                    <!-- Escenas Detectadas en OBS -->
+                                    <StackPanel Margin="0,2,0,6">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasObsScenes}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <TextBlock Text="ESCENAS DETECTADAS EN OBS" FontWeight="Bold" Foreground="#89B4FA" FontSize="10" Margin="0,0,0,4"/>
+                                        <ItemsControl ItemsSource="{Binding ObsScenes}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="2"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                                        <Button Command="{Binding DataContext.SelectObsItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                            <StackPanel>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding IconEmoji}" FontSize="11" Margin="0,0,4,0"/>
+                                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding Subtitle}" Foreground="#A6ADC8" FontSize="9" TextTrimming="CharacterEllipsis"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <!-- Fuentes y Audio Detectados en OBS -->
+                                    <StackPanel Margin="0,2,0,6">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasObsSources}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <TextBlock Text="FUENTES Y AUDIO DE OBS" FontWeight="Bold" Foreground="#A6E3A1" FontSize="10" Margin="0,0,0,4"/>
+                                        <ItemsControl ItemsSource="{Binding ObsSources}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="1"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                                        <Button Command="{Binding DataContext.SelectObsItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                            <DockPanel>
+                                                                <TextBlock Text="{Binding IconEmoji}" FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                                <StackPanel VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text="{Binding Subtitle}" Foreground="#A6ADC8" FontSize="9" TextTrimming="CharacterEllipsis"/>
+                                                                </StackPanel>
+                                                            </DockPanel>
+                                                        </Button>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <!-- Configuración WebSocket OBS Compacta -->
+                                    <Border Background="#212234" CornerRadius="8" Padding="8" Margin="0,4,0,4" BorderThickness="1" BorderBrush="#313244">
+                                        <StackPanel>
+                                            <Grid Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="2*"/>
+                                                    <ColumnDefinition Width="1*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                    <TextBlock Text="Host OBS:" Foreground="#A6ADC8" FontSize="10"/>
+                                                    <TextBox Text="{Binding ObsHost, UpdateSourceTrigger=PropertyChanged}" Background="#313244" Foreground="White" BorderThickness="0" Padding="5,4" FontSize="11"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                    <TextBlock Text="Puerto:" Foreground="#A6ADC8" FontSize="10"/>
+                                                    <TextBox Text="{Binding ObsPort, UpdateSourceTrigger=PropertyChanged}" Background="#313244" Foreground="White" BorderThickness="0" Padding="5,4" FontSize="11"/>
+                                                </StackPanel>
+                                            </Grid>
+                                            <TextBlock Text="Contraseña WebSocket OBS:" Foreground="#A6ADC8" FontSize="10"/>
+                                            <TextBox Text="{Binding ObsPassword, UpdateSourceTrigger=PropertyChanged}" Background="#313244" Foreground="White" BorderThickness="0" Padding="5,4" FontSize="11" Margin="0,2,0,6"/>
+                                            <Border Background="#89B4FA" CornerRadius="6">
+                                                <Button Command="{Binding ScanObsWebSocketCommand}" Content="🔍 Escanear Escenas y Fuentes OBS" Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="11" BorderThickness="0" Padding="6" Cursor="Hand"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding ObsScanStatus}" Foreground="#89B4FA" FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- ==================== 6. ATAJOS DE TECLADO ==================== -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="KEYBOARD_HOTKEY">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="GRABADOR Y ATAJOS RÁPIDOS DE TECLADO" FontWeight="Bold" Foreground="#F9E2AF" FontSize="10" Margin="0,0,0,6"/>
+                                    <Border CornerRadius="8" Padding="10" Margin="0,0,0,8" BorderThickness="1.5">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#212234"/>
+                                                <Setter Property="BorderBrush" Value="#F9E2AF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsRecordingHotkey}" Value="True">
+                                                        <Setter Property="Background" Value="#4A1E2B"/>
+                                                        <Setter Property="BorderBrush" Value="#F38BA8"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Button Command="{Binding ToggleHotkeyRecordingCommand}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Center" Cursor="Hand">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock FontWeight="Bold" FontSize="12" HorizontalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="🔴 Grabar Teclas desde mi Teclado"/>
+                                                            <Setter Property="Foreground" Value="#F9E2AF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsRecordingHotkey}" Value="True">
+                                                                    <Setter Property="Text" Value="⌨️ ¡Presiona tus teclas ahora! (ESC cancela)"/>
+                                                                    <Setter Property="Foreground" Value="#F38BA8"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="Haz clic y pulsa cualquier combinación real" Foreground="#A6ADC8" FontSize="9.5" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+
+                                    <UniformGrid Columns="2">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="CTRL+SHIFT+M" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🎙️ Mute Discord" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Ctrl + Shift + M" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="WIN+SHIFT+S" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="✂️ Captura Pantalla" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Win + Shift + S" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="CTRL+C" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📋 Copiar" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Ctrl + C" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="CTRL+V" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="📥 Pegar" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Ctrl + V" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="ALT+TAB" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔄 Cambiar App" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Alt + Tab" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="ALT+F4" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="❌ Cerrar (Alt+F4)" FontWeight="Bold" Foreground="#F38BA8" FontSize="11" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Alt + F4" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                    </UniformGrid>
+                                </StackPanel>
+
+                                <!-- ==================== 7. IR A PÁGINA (NAVIGATE) ==================== -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="NAVIGATE">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="SELECCIONA LA PÁGINA / PERFIL DE DESTINO" FontWeight="Bold" Foreground="#818CF8" FontSize="10" Margin="0,0,0,6"/>
+                                    <ItemsControl ItemsSource="{Binding Profiles}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <UniformGrid Columns="2"/>
@@ -804,16 +1140,14 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                                    <Button Command="{Binding DataContext.SelectObsItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                <Border Background="#212234" CornerRadius="8" Margin="3" Padding="8" BorderThickness="1.5" BorderBrush="#4F46E5">
+                                                    <Button Command="{Binding DataContext.SelectNavigateProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}"
-                                                            Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
-                                                        <StackPanel>
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding IconEmoji}" FontSize="11" Margin="0,0,4,0"/>
-                                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                                                            </StackPanel>
-                                                            <TextBlock Text="{Binding Subtitle}" Foreground="#A6ADC8" FontSize="9" TextTrimming="CharacterEllipsis"/>
+                                                            Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                        <StackPanel HorizontalAlignment="Center">
+                                                            <TextBlock Text="📄" FontSize="18" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
+                                                            <TextBlock Text="Abrir esta página" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Button>
                                                 </Border>
@@ -822,133 +1156,112 @@
                                     </ItemsControl>
                                 </StackPanel>
 
-                                <!-- Fuentes y Audio Detectados en OBS -->
-                                <StackPanel Margin="0,4,0,8">
+                                <!-- ==================== 8. SISTEMA PC ==================== -->
+                                <StackPanel>
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
-                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HasObsSources}" Value="False">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="SYSTEM_COMMAND">
+                                                    <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
 
-                                    <TextBlock Text="FUENTES Y ENTRADAS DETECTADAS EN OBS" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11" Margin="0,0,0,6"/>
-                                    <ItemsControl ItemsSource="{Binding ObsSources}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <UniformGrid Columns="1"/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#212234" CornerRadius="6" Margin="2" Padding="7" BorderThickness="1" BorderBrush="#313244">
-                                                    <Button Command="{Binding DataContext.SelectObsItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}"
-                                                            Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
-                                                        <DockPanel>
-                                                            <TextBlock Text="{Binding IconEmoji}" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                            <StackPanel VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                                                                <TextBlock Text="{Binding Subtitle}" Foreground="#A6ADC8" FontSize="9" TextTrimming="CharacterEllipsis"/>
-                                                            </StackPanel>
-                                                        </DockPanel>
-                                                    </Button>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                    <TextBlock Text="COMANDOS DE ENERGÍA Y SEGURIDAD DE WINDOWS" FontWeight="Bold" Foreground="#F38BA8" FontSize="10" Margin="0,0,0,6"/>
+                                    <UniformGrid Columns="2">
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="LOCK_WORKSTATION" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔒" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Bloquear PC" FontWeight="Bold" Foreground="White" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Pantalla de bloqueo" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SLEEP" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🌙" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Suspender PC" FontWeight="Bold" Foreground="#CBA6F7" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Modo reposo" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="REBOOT" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🔄" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Reiniciar PC" FontWeight="Bold" Foreground="#FAB387" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Reinicio del sistema" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="8" Margin="3" Padding="10" BorderThickness="1.5" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="SHUTDOWN" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="🛑" FontSize="20" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Apagar PC" FontWeight="Bold" Foreground="#F38BA8" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                                    <TextBlock Text="Apagado seguro" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                    </UniformGrid>
                                 </StackPanel>
 
-                                <!-- Quick Presets for OBS -->
-                                <TextBlock Text="ACCIONES RÁPIDAS DE OBS" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,4,0,6"/>
-                                <UniformGrid Columns="2">
-                                    <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="Escena Principal"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
-                                            <StackPanel>
-                                                <TextBlock Text="🎬 Escena Principal" FontWeight="Bold" Foreground="White" FontSize="11"/>
-                                                <TextBlock Text="Cambiar a escena" Foreground="#A6ADC8" FontSize="9"/>
-                                            </StackPanel>
-                                        </Button>
+                                <!-- Valor / Parámetro actual (compacto) -->
+                                <TextBlock Text="Comando / Ruta Asignada:" Foreground="#A6ADC8" FontSize="10" FontWeight="SemiBold" Margin="0,8,0,3"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" Text="{Binding SelectedButton.ActionValue, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="#313244" Foreground="#CDD6F4" FontSize="11" BorderThickness="0" Padding="7,5"/>
+                                    <Border Grid.Column="1" Background="#45475A" CornerRadius="4" Margin="4,0,0,0">
+                                        <Button Content="📁" Command="{Binding BrowseFileCommand}" ToolTip="Examinar archivo .exe o .lnk"
+                                                Background="Transparent" Foreground="White" BorderThickness="0" Padding="8,4" Cursor="Hand"/>
                                     </Border>
-                                    <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="START_RECORD"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
-                                            <StackPanel>
-                                                <TextBlock Text="🔴 Iniciar Grabación" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
-                                                <TextBlock Text="Control de grabación" Foreground="#A6ADC8" FontSize="9"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Border>
-                                    <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="START_STREAM"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
-                                            <StackPanel>
-                                                <TextBlock Text="📡 Iniciar Stream" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11"/>
-                                                <TextBlock Text="Control de streaming" Foreground="#A6ADC8" FontSize="9"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Border>
-                                    <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
-                                        <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="TOGGLE_MUTE"
-                                                Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
-                                            <StackPanel>
-                                                <TextBlock Text="🎙️ Toggle Mute" FontWeight="Bold" Foreground="#FAB387" FontSize="11"/>
-                                                <TextBlock Text="Silenciar micro OBS" Foreground="#A6ADC8" FontSize="9"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Border>
-                                </UniformGrid>
+                                </Grid>
                             </StackPanel>
+                        </ScrollViewer>
 
-                            <!-- Action Value Parameter -->
-                            <TextBlock Text="Valor / Ruta de Acción:" Foreground="#CDD6F4" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <Grid Margin="0,0,0,15">
+                        <!-- ZONA 3: BARRA INFERIOR FIJA (Siempre visible sin hacer scroll) -->
+                        <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#313244" Padding="0,10,0,0">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="1.25*"/>
+                                    <ColumnDefinition Width="0.85*"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" Text="{Binding SelectedButton.ActionValue, UpdateSourceTrigger=PropertyChanged}" 
-                                         Background="#313244" Foreground="White" BorderThickness="0" Padding="8"/>
-                                <Border Grid.Column="1" Background="#45475A" CornerRadius="4" Margin="6,0,0,0">
-                                    <Button Content="📁 Buscar..." Command="{Binding BrowseFileCommand}"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="10,6"/>
+
+                                <Border Grid.Column="0" Background="#A6E3A1" CornerRadius="7" Margin="0,0,4,0">
+                                    <Button Content="▶️ Probar"
+                                            Command="{Binding ExecuteSelectedActionCommand}"
+                                            ToolTip="Probar esta acción inmediatamente en la PC"
+                                            Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="12"
+                                            BorderThickness="0" Padding="6,9" Cursor="Hand"/>
+                                </Border>
+
+                                <Border Grid.Column="1" Background="#89B4FA" CornerRadius="7" Margin="2,0">
+                                    <Button Content="💾 Guardar"
+                                            Command="{Binding SaveButtonConfigurationCommand}"
+                                            ToolTip="Guardar y sincronizar con el teléfono Android"
+                                            Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="12"
+                                            BorderThickness="0" Padding="6,9" Cursor="Hand"/>
+                                </Border>
+
+                                <Border Grid.Column="2" Background="#F38BA8" CornerRadius="7" Margin="4,0,0,0">
+                                    <Button Content="🗑️ Borrar"
+                                            Command="{Binding DeleteButtonConfigurationCommand}"
+                                            ToolTip="Eliminar botón y compactar cuadrícula"
+                                            Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="12"
+                                            BorderThickness="0" Padding="6,9" Cursor="Hand"/>
                                 </Border>
                             </Grid>
-
-                            <!-- Hex Color Code -->
-                            <TextBlock Text="Código de Color Hexadecimal:" Foreground="#CDD6F4" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedButton.BackgroundColor, UpdateSourceTrigger=PropertyChanged}" 
-                                     Background="#313244" Foreground="White" BorderThickness="0" Padding="8" Margin="0,0,0,20"/>
-
-                            <!-- Action Execution Button -->
-                            <Border Background="#A6E3A1" CornerRadius="8" Margin="0,0,0,10">
-                                <Button Content="▶️ Ejecutar / Probar Acción" 
-                                        Command="{Binding ExecuteSelectedActionCommand}"
-                                        Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="14"
-                                        BorderThickness="0" Padding="12,10"/>
-                            </Border>
-
-                            <!-- Save / Sync Button -->
-                            <Border Background="#89B4FA" CornerRadius="8" Margin="0,0,0,10">
-                                <Button Content="💾 Guardar y Sincronizar" 
-                                        Command="{Binding SaveButtonConfigurationCommand}"
-                                        Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="14"
-                                        BorderThickness="0" Padding="12,10"/>
-                            </Border>
-
-                            <!-- Delete / Clear Button -->
-                            <Border Background="#F38BA8" CornerRadius="8">
-                                <Button Content="🗑️ Eliminar Botón"
-                                        Command="{Binding DeleteButtonConfigurationCommand}"
-                                        Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="14"
-                                        BorderThickness="0" Padding="12,10"/>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
 

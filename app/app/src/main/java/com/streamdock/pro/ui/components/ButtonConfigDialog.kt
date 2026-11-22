@@ -1,11 +1,13 @@
 package com.streamdock.pro.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,24 +25,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -59,59 +53,107 @@ import androidx.core.graphics.toColorInt
 import com.streamdock.pro.data.models.Button as ButtonModel
 import com.streamdock.pro.data.models.Profile
 
+private data class ActionCategoryTab(
+    val id: String,
+    val title: String,
+    val protocolActionType: String,
+    val accentColor: Color,
+)
+
 private data class ActionPreset(
+    val protocolActionType: String,
     val value: String,
-    val defaultLabel: String,
+    val title: String,
+    val subtitle: String,
     val defaultIcon: String,
     val defaultColor: String,
 )
 
-/**
- * Preajustes alineados exactamente con el servidor Rust (`win32_input.rs`, `action_engine.rs`)
- * y con el editor de escritorio WinUI (`MainViewModel.cs`).
- */
-private val presetsByActionType: Map<String, List<ActionPreset>> = mapOf(
-    "MEDIA_CONTROL" to listOf(
-        ActionPreset("PLAY_PAUSE", "Play / Pausa", "play", "#9B59B6"),
-        ActionPreset("NEXT_TRACK", "Siguiente", "next", "#9B59B6"),
-        ActionPreset("PREV_TRACK", "Anterior", "prev", "#9B59B6"),
-        ActionPreset("VOLUME_UP", "Subir Vol.", "vol_up", "#2ECC71"),
-        ActionPreset("VOLUME_DOWN", "Bajar Vol.", "vol_down", "#E67E22"),
-        ActionPreset("VOLUME_MUTE", "Silenciar", "mute", "#E74C3C"),
-        ActionPreset("SPOTIFY_PLAY_PAUSE", "Spotify Play", "play", "#1DB954"),
-        ActionPreset("SPOTIFY_NEXT", "Spotify Sig.", "next", "#1DB954"),
-        ActionPreset("SPOTIFY_PREV", "Spotify Ant.", "prev", "#1DB954"),
-        ActionPreset("SPOTIFY_VOL_UP", "Spotify Vol+", "vol_up", "#1DB954"),
-        ActionPreset("SPOTIFY_VOL_DOWN", "Spotify Vol-", "vol_down", "#1DB954"),
-        ActionPreset("SPOTIFY_MUTE", "Spotify Mute", "mute", "#E74C3C"),
-        ActionPreset("SPOTIFY_OPEN", "Abrir Spotify", "play", "#1DB954"),
+private val categoryTabs = listOf(
+    ActionCategoryTab("AUDIO_PC", "🎵 Audio PC", "MEDIA_CONTROL", Color(0xFFCBA6F7)),
+    ActionCategoryTab("SPOTIFY", "🟢 Spotify", "MEDIA_CONTROL", Color(0xFF1DB954)),
+    ActionCategoryTab("LAUNCH_APP", "🚀 Abrir App", "LAUNCH_APP", Color(0xFF89B4FA)),
+    ActionCategoryTab("WINDOWS", "🪟 Ventanas", "LAUNCH_APP", Color(0xFF38BDF8)),
+    ActionCategoryTab("OBS_SCENE_SWITCH", "🎥 OBS Studio", "OBS_SCENE_SWITCH", Color(0xFF89DCEB)),
+    ActionCategoryTab("KEYBOARD_HOTKEY", "⌨️ Atajo Teclado", "KEYBOARD_HOTKEY", Color(0xFFF9E2AF)),
+    ActionCategoryTab("NAVIGATE", "📄 Ir a Página", "NAVIGATE", Color(0xFF818CF8)),
+    ActionCategoryTab("SYSTEM_COMMAND", "⚙️ Sistema PC", "SYSTEM_COMMAND", Color(0xFFF38BA8)),
+)
+
+private val presetsByCategory: Map<String, List<ActionPreset>> = mapOf(
+    "AUDIO_PC" to listOf(
+        ActionPreset("MEDIA_CONTROL", "VOLUME_SLIDER_PC", "🎚️ Barra Vol. PC", "Deslizar arriba/abajo en perfil", "vol_up", "#7C3AED"),
+        ActionPreset("MEDIA_CONTROL", "PLAY_PAUSE", "Play / Pausa", "Audio global PC", "play", "#9B59B6"),
+        ActionPreset("MEDIA_CONTROL", "VOLUME_MUTE", "Silenciar PC", "Mutea todo Windows", "mute", "#E74C3C"),
+        ActionPreset("MEDIA_CONTROL", "VOLUME_UP", "Subir Vol.", "Volumen maestro +", "vol_up", "#2ECC71"),
+        ActionPreset("MEDIA_CONTROL", "VOLUME_DOWN", "Bajar Vol.", "Volumen maestro -", "vol_down", "#E67E22"),
+        ActionPreset("MEDIA_CONTROL", "PREV_TRACK", "Anterior", "Canción previa", "prev", "#9B59B6"),
+        ActionPreset("MEDIA_CONTROL", "NEXT_TRACK", "Siguiente", "Siguiente pista", "next", "#9B59B6"),
     ),
-    "SYSTEM_COMMAND" to listOf(
-        ActionPreset("LOCK_WORKSTATION", "Bloquear PC", "lock", "#E74C3C"),
-        ActionPreset("SLEEP", "Suspender PC", "power", "#E74C3C"),
-        ActionPreset("SHUTDOWN", "Apagar PC", "power", "#E74C3C"),
-        ActionPreset("REBOOT", "Reiniciar PC", "power", "#E74C3C"),
-        ActionPreset("SHOW_DESKTOP", "Escritorio", "computer", "#E74C3C"),
+    "SPOTIFY" to listOf(
+        ActionPreset("MEDIA_CONTROL", "VOLUME_SLIDER_SPOTIFY", "🎚️ Barra Spotify", "Deslizar arriba/abajo en perfil", "vol_up", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_PLAY_PAUSE", "Spotify Play", "Solo Spotify 2do plano", "play", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_OPEN", "Abrir Spotify", "Mostrar ventana", "play", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_PREV", "Spotify Ant.", "Canción previa", "prev", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_NEXT", "Spotify Sig.", "Siguiente pista", "next", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_VOL_UP", "Spotify Vol+", "No sube juegos/PC", "vol_up", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_VOL_DOWN", "Spotify Vol-", "No baja juegos/PC", "vol_down", "#1DB954"),
+        ActionPreset("MEDIA_CONTROL", "SPOTIFY_MUTE", "Spotify Mute", "Silencia solo Spotify", "mute", "#E74C3C"),
     ),
-    "KEYBOARD_HOTKEY" to listOf(
-        ActionPreset("CTRL+SHIFT+M", "Mute Mic", "mic_off", "#34495E"),
-        ActionPreset("WIN+SHIFT+S", "Captura", "computer", "#34495E"),
-        ActionPreset("ALT+F4", "Cerrar", "error", "#34495E"),
+    "WINDOWS" to listOf(
+        ActionPreset("LAUNCH_APP", "WIN_MINIMIZE", "Minimizar", "Oculta ventana activa", "computer", "#3498DB"),
+        ActionPreset("LAUNCH_APP", "WIN_MAXIMIZE", "Maximizar", "Pantalla completa", "apps", "#2ECC71"),
+        ActionPreset("LAUNCH_APP", "WIN_CLOSE", "Cerrar Ventana", "Cierra ventana activa", "error", "#E74C3C"),
+        ActionPreset("SYSTEM_COMMAND", "SHOW_DESKTOP", "Escritorio", "Minimiza todo (Win+D)", "computer", "#3498DB"),
     ),
     "OBS_SCENE_SWITCH" to listOf(
-        ActionPreset("Escena Principal", "OBS", "tv", "#3498DB"),
-        ActionPreset("START_RECORD", "Grabar", "record", "#F38BA8"),
-        ActionPreset("START_STREAM", "Stream", "stream", "#A6E3A1"),
-        ActionPreset("TOGGLE_MUTE", "Mute Mic", "mic_off", "#FAB387"),
+        ActionPreset("OBS_SCENE_SWITCH", "START_STREAM", "Stream OBS", "Iniciar / Detener directo", "stream", "#2ECC71"),
+        ActionPreset("OBS_SCENE_SWITCH", "START_RECORD", "Grabar OBS", "Iniciar / Detener grabación", "record", "#E74C3C"),
+        ActionPreset("OBS_SCENE_SWITCH", "TOGGLE_MUTE", "Mute Mic OBS", "Silenciar micro en OBS", "mic_off", "#E67E22"),
+        ActionPreset("OBS_SCENE_SWITCH", "Escena Principal", "Escena OBS", "Cambiar a escena", "tv", "#3498DB"),
+    ),
+    "KEYBOARD_HOTKEY" to listOf(
+        ActionPreset("KEYBOARD_HOTKEY", "CTRL+SHIFT+M", "Mute Discord", "Ctrl + Shift + M", "mic_off", "#34495E"),
+        ActionPreset("KEYBOARD_HOTKEY", "WIN+SHIFT+S", "Captura", "Win + Shift + S", "computer", "#34495E"),
+        ActionPreset("KEYBOARD_HOTKEY", "CTRL+C", "Copiar", "Ctrl + C", "keyboard", "#34495E"),
+        ActionPreset("KEYBOARD_HOTKEY", "CTRL+V", "Pegar", "Ctrl + V", "keyboard", "#34495E"),
+        ActionPreset("KEYBOARD_HOTKEY", "ALT+TAB", "Cambiar App", "Alt + Tab", "apps", "#34495E"),
+        ActionPreset("KEYBOARD_HOTKEY", "ALT+F4", "Cerrar App", "Alt + F4", "error", "#E74C3C"),
+    ),
+    "SYSTEM_COMMAND" to listOf(
+        ActionPreset("SYSTEM_COMMAND", "LOCK_WORKSTATION", "Bloquear PC", "Pantalla de bloqueo", "lock", "#E74C3C"),
+        ActionPreset("SYSTEM_COMMAND", "SLEEP", "Suspender PC", "Modo reposo", "power", "#9B59B6"),
+        ActionPreset("SYSTEM_COMMAND", "REBOOT", "Reiniciar PC", "Reinicio del sistema", "power", "#E67E22"),
+        ActionPreset("SYSTEM_COMMAND", "SHUTDOWN", "Apagar PC", "Apagado seguro", "power", "#E74C3C"),
     ),
     "LAUNCH_APP" to listOf(
-        ActionPreset("WIN_MINIMIZE", "Minimizar", "computer", "#3498DB"),
-        ActionPreset("WIN_MAXIMIZE", "Maximizar", "apps", "#2ECC71"),
-        ActionPreset("WIN_CLOSE", "Cerrar Ventana", "error", "#E74C3C"),
+        ActionPreset("LAUNCH_APP", "notepad.exe", "Bloc de Notas", "Abrir Notepad", "launch", "#2A2A3C"),
+        ActionPreset("LAUNCH_APP", "calc.exe", "Calculadora", "Abrir Calculadora", "launch", "#2A2A3C"),
+        ActionPreset("LAUNCH_APP", "explorer.exe", "Explorador", "Abrir Archivos", "folder", "#2A2A3C"),
+        ActionPreset("LAUNCH_APP", "cmd.exe", "Terminal", "Símbolo del sistema", "terminal", "#2A2A3C"),
     ),
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun inferInitialCategory(actionType: String, actionValue: String): String = when {
+    actionType == "MEDIA_CONTROL" && (
+        actionValue.startsWith("SPOTIFY_", ignoreCase = true) ||
+            actionValue.startsWith("VOLUME_SLIDER_SPOTIFY", ignoreCase = true)
+        ) -> "SPOTIFY"
+    actionType == "MEDIA_CONTROL" -> "AUDIO_PC"
+    actionType == "LAUNCH_APP" && (
+        actionValue.startsWith("WIN_MINIMIZE", ignoreCase = true) ||
+            actionValue.startsWith("WIN_MAXIMIZE", ignoreCase = true) ||
+            actionValue.startsWith("WIN_CLOSE", ignoreCase = true)
+        ) -> "WINDOWS"
+    actionType == "SYSTEM_COMMAND" && actionValue.equals("SHOW_DESKTOP", ignoreCase = true) -> "WINDOWS"
+    actionType == "LAUNCH_APP" || actionType == "LAUNCH_SHORTCUT" -> "LAUNCH_APP"
+    actionType == "OBS_SCENE_SWITCH" -> "OBS_SCENE_SWITCH"
+    actionType == "KEYBOARD_HOTKEY" -> "KEYBOARD_HOTKEY"
+    actionType == "NAVIGATE" -> "NAVIGATE"
+    actionType == "SYSTEM_COMMAND" -> "SYSTEM_COMMAND"
+    else -> "AUDIO_PC"
+}
+
 @Composable
 fun ButtonConfigDialog(
     button: ButtonModel,
@@ -125,326 +167,401 @@ fun ButtonConfigDialog(
     var selectedColor by remember(button) { mutableStateOf(button.backgroundColor ?: "#1A1B26") }
     var selectedType by remember(button) { mutableStateOf(button.actionType) }
     var actionValue by remember(button) { mutableStateOf(button.actionValue) }
+    var selectedCategory by remember(button) {
+        mutableStateOf(inferInitialCategory(button.actionType, button.actionValue))
+    }
 
-    val colors = listOf("#1A1B26", "#2196F3", "#F44336", "#4CAF50", "#FFEB3B", "#9C27B0", "#FF9800", "#795548")
-    val actionTypes = listOf(
-        "NONE",
-        "KEYBOARD_HOTKEY",
-        "MEDIA_CONTROL",
-        "LAUNCH_APP",
-        "LAUNCH_SHORTCUT",
-        "OBS_SCENE_SWITCH",
-        "STREAMER_BOT_ACTION",
-        "SYSTEM_COMMAND",
-        "NAVIGATE",
-    )
+    val colors = listOf("#1A1B26", "#2196F3", "#1DB954", "#9B59B6", "#E74C3C", "#E67E22", "#4F46E5", "#34495E")
 
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(18.dp),
             color = Color(0xFF0F0F14),
+            border = BorderStroke(1.dp, Color(0xFF262B3D)),
             modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .fillMaxHeight(0.88f),
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.92f),
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
-                    .fillMaxHeight(),
-            ) {
-                // Encabezado fijo con botón rápido de papelera
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "CONFIGURAR BOTÓN",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                    if (onDelete != null) {
-                        IconButton(onClick = onDelete) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar botón",
-                                tint = Color(0xFFFF5252),
-                            )
-                        }
-                    }
-                }
+            @Suppress("UnusedBoxWithConstraintsScope")
+            BoxWithConstraints {
+                val isWideDialog = this.maxWidth >= 520.dp
+                val gridColumnsCount = if (isWideDialog) 4 else 2
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Contenido desplazable
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxHeight(),
                 ) {
-                    SectionHeader(text = "APARIENCIA")
-
-                    StyledInput(
-                        value = label,
-                        onValueChange = { label = it },
-                        label = "Etiqueta",
-                        placeholder = "Nombre del botón",
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(text = "Color de Fondo", color = Color(0xFF9499B0), fontSize = 12.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    // Encabezado fijo con botón cerrar
                     Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        colors.forEach { hex ->
-                            val color = Color(hex.toColorInt())
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(color)
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (selectedColor.equals(hex, ignoreCase = true)) Color.White else Color.Transparent,
-                                        shape = CircleShape,
-                                    )
-                                    .clickable { selectedColor = hex },
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(text = "Icono", color = Color(0xFF9499B0), fontSize = 12.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(modifier = Modifier.height(120.dp)) {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(5),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            item {
-                                IconItem(
-                                    name = "none",
-                                    isSelected = selectedIcon == "none",
-                                    onClick = { selectedIcon = "none" },
-                                )
-                            }
-                            items(IconMapper.getAllIconNames()) { name ->
-                                IconItem(
-                                    name = name,
-                                    isSelected = selectedIcon == name,
-                                    onClick = { selectedIcon = name },
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    SectionHeader(text = "ACCIÓN")
-
-                    var expanded by remember { mutableStateOf(value = false) }
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it },
-                    ) {
-                        OutlinedTextField(
-                            value = actionTypeDisplayName(selectedType),
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Tipo de Acción") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedTextColor = Color.White,
-                                focusedTextColor = Color.White,
-                                unfocusedBorderColor = Color(0xFF2D313E),
-                            ),
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                        ) {
-                            actionTypes.forEach { type ->
-                                DropdownMenuItem(
-                                    text = { Text(actionTypeDisplayName(type)) },
-                                    onClick = {
-                                        selectedType = type
-                                        expanded = false
-                                        val firstPreset = presetsByActionType[type]?.firstOrNull()
-                                        if (firstPreset != null) {
-                                            actionValue = firstPreset.value
-                                            if (label.isBlank()) label = firstPreset.defaultLabel
-                                            if (selectedIcon == "none") selectedIcon = firstPreset.defaultIcon
-                                        }
-                                    },
-                                )
-                            }
-                        }
-                    }
-
-                    // Preajustes rápidos compatibles con el servidor Rust
-                    val presets = presetsByActionType[selectedType]
-                    if (!presets.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(text = "Preajustes del Servidor", color = Color(0xFF9499B0), fontSize = 12.sp)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            presets.forEach { preset ->
-                                val isSelected = actionValue == preset.value
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = {
-                                        actionValue = preset.value
-                                        label = preset.defaultLabel
-                                        selectedIcon = preset.defaultIcon
-                                        selectedColor = preset.defaultColor
-                                    },
-                                    label = { Text(preset.defaultLabel, fontSize = 11.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color(0xFF4F46E5),
-                                        selectedLabelColor = Color.White,
-                                        containerColor = Color(0xFF1A1B26),
-                                        labelColor = Color(0xFF9499B0),
-                                    ),
-                                )
-                            }
-                        }
-                    }
-
-                    // Selector de páginas cuando la acción es NAVIGATE
-                    if (selectedType == "NAVIGATE" && availableProfiles.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(text = "Página de destino", color = Color(0xFF9499B0), fontSize = 12.sp)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            availableProfiles.forEach { profile ->
-                                val isSelected = actionValue == profile.id || actionValue.equals(profile.name, ignoreCase = true)
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = {
-                                        actionValue = profile.id
-                                        if (label.isBlank()) label = profile.name
-                                        if (selectedIcon == "none") selectedIcon = "folder"
-                                    },
-                                    label = { Text(profile.name, fontSize = 11.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color(0xFF4F46E5),
-                                        selectedLabelColor = Color.White,
-                                        containerColor = Color(0xFF1A1B26),
-                                        labelColor = Color(0xFF9499B0),
-                                    ),
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    if (selectedType != "NONE") {
-                        StyledInput(
-                            value = actionValue,
-                            onValueChange = { actionValue = it },
-                            label = when (selectedType) {
-                                "KEYBOARD_HOTKEY" -> "Combinación (Ej: CTRL+SHIFT+M)"
-                                "MEDIA_CONTROL" -> "Comando (PLAY_PAUSE, VOLUME_UP, VOLUME_MUTE...)"
-                                "LAUNCH_APP", "LAUNCH_SHORTCUT" -> "Ruta o ejecutable (Ej: notepad.exe)"
-                                "OBS_SCENE_SWITCH" -> "Nombre de la Escena / Comando OBS"
-                                "STREAMER_BOT_ACTION" -> "Acción de Streamer.bot"
-                                "SYSTEM_COMMAND" -> "Comando (LOCK_WORKSTATION, SLEEP, SHUTDOWN...)"
-                                "NAVIGATE" -> "Nombre o ID de Página"
-                                else -> "Valor"
-                            },
-                            placeholder = "Escribe el valor aquí...",
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                // Barra inferior fija: SIEMPRE visible sin necesidad de hacer scroll
-                HorizontalDivider(color = Color(0xFF2D313E), thickness = 1.dp)
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    if (onDelete != null) {
-                        Button(
-                            onClick = onDelete,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF5252),
-                                contentColor = Color.White,
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Eliminar",
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "ELIMINAR",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                            )
-                        }
-                    }
-
-                    Button(
-                        onClick = { onSave(label, selectedIcon, selectedColor, selectedType, actionValue) },
-                        modifier = Modifier
-                            .weight(1.3f)
-                            .height(46.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2196F3),
-                            contentColor = Color.White,
-                        ),
-                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "GUARDAR",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
+                            text = "CONFIGURAR TECLA #${button.position + 1}",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
                         )
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(30.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Cerrar",
+                                tint = Color(0xFF9499B0),
+                            )
+                        }
                     }
-                }
 
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9499B0)),
-                ) {
-                    Text("CANCELAR")
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Contenido desplazable adaptable
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        SectionHeader(text = "1. CATEGORÍA DE ACCIÓN")
+
+                        // Cuadrícula adaptable: 4 columnas en Horizontal/Tablet, 2 en Vertical
+                        val chunkedCategories = remember(gridColumnsCount) {
+                            categoryTabs.chunked(gridColumnsCount)
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            chunkedCategories.forEach { rowItems ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    rowItems.forEach { cat ->
+                                        val isSelected = selectedCategory == cat.id
+                                        Surface(
+                                            color = if (isSelected) cat.accentColor.copy(alpha = 0.18f) else Color(0xFF161922),
+                                            shape = RoundedCornerShape(10.dp),
+                                            border = BorderStroke(
+                                                width = if (isSelected) 1.5.dp else 1.dp,
+                                                color = if (isSelected) cat.accentColor else Color(0xFF282D3E),
+                                            ),
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable {
+                                                    selectedCategory = cat.id
+                                                    if (selectedType == "NONE" || selectedType.isBlank()) {
+                                                        selectedType = cat.protocolActionType
+                                                    }
+                                                },
+                                        ) {
+                                            Text(
+                                                text = cat.title,
+                                                color = if (isSelected) Color.White else Color(0xFFCDD6F4),
+                                                fontSize = 11.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 8.dp),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Catálogo de Tarjetas de la Categoría Seleccionada (Adaptable 2 o 3 columnas)
+                        val presetCols = if (isWideDialog) 3 else 2
+                        val categoryPresets = presetsByCategory[selectedCategory]
+                        if (!categoryPresets.isNullOrEmpty()) {
+                            Text(
+                                text = "Selecciona una Función:",
+                                color = Color(0xFF9499B0),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            val chunkedPresets = remember(selectedCategory, presetCols) {
+                                categoryPresets.chunked(presetCols)
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                chunkedPresets.forEach { rowPresets ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    ) {
+                                        rowPresets.forEach { preset ->
+                                            val isActionSelected = actionValue.equals(preset.value, ignoreCase = true)
+                                            Surface(
+                                                color = if (isActionSelected) Color(0xFF202A44) else Color(0xFF151822),
+                                                shape = RoundedCornerShape(10.dp),
+                                                border = BorderStroke(
+                                                    width = if (isActionSelected) 1.5.dp else 1.dp,
+                                                    color = if (isActionSelected) Color(0xFF00E676) else Color(0xFF282D3E),
+                                                ),
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clickable {
+                                                        selectedType = preset.protocolActionType
+                                                        actionValue = preset.value
+                                                        label = preset.title
+                                                        selectedIcon = preset.defaultIcon
+                                                        selectedColor = preset.defaultColor
+                                                    },
+                                            ) {
+                                                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)) {
+                                                    Text(
+                                                        text = preset.title,
+                                                        color = if (isActionSelected) Color(0xFF00E676) else Color.White,
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                    Text(
+                                                        text = preset.subtitle,
+                                                        color = Color(0xFF9499B0),
+                                                        fontSize = 10.sp,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        repeat(presetCols - rowPresets.size) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Selector de páginas cuando la categoría es NAVIGATE
+                        if (selectedCategory == "NAVIGATE" && availableProfiles.isNotEmpty()) {
+                            Text(
+                                text = "Selecciona la Página de destino:",
+                                color = Color(0xFF9499B0),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            val chunkedProfiles = remember(availableProfiles, presetCols) {
+                                availableProfiles.chunked(presetCols)
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                chunkedProfiles.forEach { rowProfiles ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    ) {
+                                        rowProfiles.forEach { profile ->
+                                            val isSelected = actionValue == profile.id || actionValue.equals(profile.name, ignoreCase = true)
+                                            Surface(
+                                                color = if (isSelected) Color(0xFF28255A) else Color(0xFF151822),
+                                                shape = RoundedCornerShape(10.dp),
+                                                border = BorderStroke(
+                                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                                    color = if (isSelected) Color(0xFF818CF8) else Color(0xFF282D3E),
+                                                ),
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .clickable {
+                                                        selectedType = "NAVIGATE"
+                                                        actionValue = profile.id
+                                                        label = profile.name
+                                                        selectedIcon = "folder"
+                                                        selectedColor = "#4F46E5"
+                                                    },
+                                            ) {
+                                                Column(modifier = Modifier.padding(10.dp)) {
+                                                    Text(
+                                                        text = "📄 ${profile.name}",
+                                                        color = Color.White,
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                    Text(
+                                                        text = "Ir a esta página",
+                                                        color = Color(0xFF9499B0),
+                                                        fontSize = 10.sp,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        repeat(presetCols - rowProfiles.size) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        StyledInput(
+                            value = actionValue,
+                            onValueChange = {
+                                actionValue = it
+                                if (selectedType == "NONE" || selectedType.isBlank()) {
+                                    selectedType = categoryTabs.find { c -> c.id == selectedCategory }?.protocolActionType ?: "LAUNCH_APP"
+                                }
+                            },
+                            label = when (selectedCategory) {
+                                "KEYBOARD_HOTKEY" -> "Combinación (Ej: CTRL+SHIFT+M)"
+                                "LAUNCH_APP" -> "Ruta o ejecutable (Ej: notepad.exe)"
+                                "OBS_SCENE_SWITCH" -> "Escena o comando OBS"
+                                "NAVIGATE" -> "Nombre o ID de Página"
+                                else -> "Comando asignado"
+                            },
+                            placeholder = "Escribe o elige una tarjeta arriba...",
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        SectionHeader(text = "2. APARIENCIA DE LA TECLA")
+
+                        StyledInput(
+                            value = label,
+                            onValueChange = { label = it },
+                            label = "Etiqueta Visible",
+                            placeholder = "Nombre del botón",
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(text = "Color del Botón", color = Color(0xFF9499B0), fontSize = 11.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            colors.forEach { hex ->
+                                val color = Color(hex.toColorInt())
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                        .border(
+                                            width = 2.dp,
+                                            color = if (selectedColor.equals(hex, ignoreCase = true)) Color.White else Color.Transparent,
+                                            shape = CircleShape,
+                                        )
+                                        .clickable { selectedColor = hex },
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(text = "Icono", color = Color(0xFF9499B0), fontSize = 11.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Box(modifier = Modifier.height(100.dp)) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(if (isWideDialog) 8 else 5),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                item {
+                                    IconItem(
+                                        name = "none",
+                                        isSelected = selectedIcon == "none",
+                                        onClick = { selectedIcon = "none" },
+                                    )
+                                }
+                                items(IconMapper.getAllIconNames()) { name ->
+                                    IconItem(
+                                        name = name,
+                                        isSelected = selectedIcon == name,
+                                        onClick = { selectedIcon = name },
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    // Barra inferior fija compacta en una sola fila (ideal para Vertical y Horizontal)
+                    HorizontalDivider(color = Color(0xFF262B3D), thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Button(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .height(42.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1E2231),
+                                contentColor = Color(0xFFCDD6F4),
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                        ) {
+                            Text(
+                                text = "CANCELAR",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                            )
+                        }
+
+                        if (onDelete != null) {
+                            Button(
+                                onClick = onDelete,
+                                modifier = Modifier
+                                    .weight(0.9f)
+                                    .height(42.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFEF4444),
+                                    contentColor = Color.White,
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Eliminar",
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "BORRAR",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = { onSave(label, selectedIcon, selectedColor, selectedType, actionValue) },
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(42.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2563EB),
+                                contentColor = Color.White,
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                        ) {
+                            Text(
+                                text = "GUARDAR",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                            )
+                        }
+                    }
                 }
             }
         }
     }
-}
-
-private fun actionTypeDisplayName(type: String): String = when (type) {
-    "OBS_SCENE_SWITCH" -> "OBS"
-    else -> type
 }
 
 @Composable
@@ -457,7 +574,7 @@ fun IconItem(
         modifier = Modifier
             .size(40.dp)
             .clickable(onClick = onClick),
-        color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF1A1B26),
+        color = if (isSelected) Color(0xFF2563EB) else Color(0xFF1A1B26),
         shape = RoundedCornerShape(8.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {

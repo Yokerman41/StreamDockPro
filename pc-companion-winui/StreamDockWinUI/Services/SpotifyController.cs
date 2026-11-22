@@ -149,12 +149,30 @@ namespace StreamDockWinUI.Services
         public static bool IsSpotifyAction(string? actionValue)
         {
             if (string.IsNullOrWhiteSpace(actionValue)) return false;
-            return actionValue.StartsWith("SPOTIFY_", StringComparison.OrdinalIgnoreCase);
+            return actionValue.StartsWith("SPOTIFY_", StringComparison.OrdinalIgnoreCase)
+                || actionValue.StartsWith("VOLUME_SLIDER_SPOTIFY", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsPcVolumeSliderAction(string? actionValue)
+        {
+            if (string.IsNullOrWhiteSpace(actionValue)) return false;
+            return actionValue.StartsWith("VOLUME_SET:", StringComparison.OrdinalIgnoreCase)
+                || actionValue.StartsWith("PC_SET_VOL:", StringComparison.OrdinalIgnoreCase)
+                || actionValue.StartsWith("VOLUME_SLIDER_PC", StringComparison.OrdinalIgnoreCase);
         }
 
         public static (bool Success, string Message) ExecuteAction(string actionValue)
         {
             var cmd = actionValue?.Trim().ToUpperInvariant() ?? string.Empty;
+
+            if (cmd.StartsWith("SPOTIFY_SET_VOL:") || cmd.StartsWith("VOLUME_SLIDER_SPOTIFY:"))
+            {
+                var parts = cmd.Split(':', 2);
+                if (parts.Length == 2 && float.TryParse(parts[1].Trim(), out float pct))
+                {
+                    return SetSpotifyVolumeScalar(Math.Clamp(pct / 100f, 0f, 1f));
+                }
+            }
 
             if (cmd == "SPOTIFY_OPEN")
             {
@@ -178,7 +196,7 @@ namespace StreamDockWinUI.Services
                 return AdjustSpotifyVolume(-0.08f);
             }
 
-            if (cmd == "SPOTIFY_MUTE")
+            if (cmd == "SPOTIFY_MUTE" || cmd == "VOLUME_SLIDER_SPOTIFY")
             {
                 return ToggleSpotifyMute();
             }
@@ -287,8 +305,86 @@ namespace StreamDockWinUI.Services
         }
 
         // ====================================================================
-        // Control de Volumen Exclusivo de Spotify en el Mezclador de Windows
+        // Control de Volumen Maestro de Windows y Exclusivo de Spotify
         // ====================================================================
+        public static int GetMasterVolumePercent()
+        {
+            try
+            {
+                var ep = GetMasterAudioEndpointVolume();
+                if (ep == null) return 80;
+                ep.GetMasterVolumeLevelScalar(out float level);
+                return (int)Math.Round(Math.Clamp(level, 0f, 1f) * 100f);
+            }
+            catch
+            {
+                return 80;
+            }
+        }
+
+        public static (bool Success, string Message) SetMasterVolumePercent(int percent)
+        {
+            try
+            {
+                var ep = GetMasterAudioEndpointVolume();
+                if (ep == null)
+                    return (false, "No se encontró salida de audio maestra de Windows");
+
+                float scalar = Math.Clamp(percent / 100f, 0f, 1f);
+                Guid empty = Guid.Empty;
+                ep.SetMasterVolumeLevelScalar(scalar, ref empty);
+                if (percent > 0)
+                {
+                    ep.SetMute(false, ref empty);
+                }
+                return (true, $"Volumen maestro de PC ajustado al {Math.Clamp(percent, 0, 100)}%");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error ajustando volumen de PC: {ex.Message}");
+            }
+        }
+
+        public static int GetSpotifyVolumePercent()
+        {
+            try
+            {
+                var volumes = GetSpotifyAudioVolumes();
+                if (volumes.Count == 0) return 85;
+                volumes[0].GetMasterVolume(out float current);
+                return (int)Math.Round(Math.Clamp(current, 0f, 1f) * 100f);
+            }
+            catch
+            {
+                return 85;
+            }
+        }
+
+        public static (bool Success, string Message) SetSpotifyVolumeScalar(float scalar)
+        {
+            try
+            {
+                var volumes = GetSpotifyAudioVolumes();
+                if (volumes.Count == 0)
+                    return (false, "Spotify no tiene una sesión de audio activa (reproduce una canción primero)");
+
+                float clamped = Math.Clamp(scalar, 0f, 1f);
+                foreach (var vol in volumes)
+                {
+                    vol.SetMasterVolume(clamped, Guid.Empty);
+                    if (clamped > 0f)
+                    {
+                        vol.SetMute(false, Guid.Empty);
+                    }
+                }
+                return (true, $"Volumen de Spotify al {(int)Math.Round(clamped * 100)}%");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error ajustando volumen de Spotify: {ex.Message}");
+            }
+        }
+
         private static (bool Success, string Message) AdjustSpotifyVolume(float delta)
         {
             try
@@ -339,6 +435,17 @@ namespace StreamDockWinUI.Services
             {
                 return (false, $"Error silenciando Spotify: {ex.Message}");
             }
+        }
+
+        private static IAudioEndpointVolume? GetMasterAudioEndpointVolume()
+        {
+            var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
+            enumerator.GetDefaultAudioEndpoint(0 /* eRender */, 1 /* eMultimedia */, out IMMDevice device);
+            if (device == null) return null;
+
+            Guid iidEndpointVolume = typeof(IAudioEndpointVolume).GUID;
+            device.Activate(ref iidEndpointVolume, 23 /* CLSCTX_ALL */, IntPtr.Zero, out object objEp);
+            return objEp as IAudioEndpointVolume;
         }
 
         private static List<ISimpleAudioVolume> GetSpotifyAudioVolumes()
@@ -401,6 +508,30 @@ namespace StreamDockWinUI.Services
         {
             [PreserveSig]
             int Activate(ref Guid iid, int dwClsCtx, IntPtr pActivationParams, [MarshalAs(UnmanagedType.IUnknown)] out object ppInterface);
+        }
+
+        [ComImport]
+        [Guid("5CDF2C82-841E-4546-9722-0CF74078229A")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IAudioEndpointVolume
+        {
+            int NotImpl1(); // RegisterControlChangeNotify
+            int NotImpl2(); // UnregisterControlChangeNotify
+            int NotImpl3(); // GetChannelCount
+            int NotImpl4(); // SetMasterVolumeLevel
+            [PreserveSig]
+            int SetMasterVolumeLevelScalar(float fLevel, ref Guid pguidEventContext);
+            int NotImpl5(); // GetMasterVolumeLevel
+            [PreserveSig]
+            int GetMasterVolumeLevelScalar(out float pfLevel);
+            int NotImpl6(); // SetChannelVolumeLevel
+            int NotImpl7(); // SetChannelVolumeLevelScalar
+            int NotImpl8(); // GetChannelVolumeLevel
+            int NotImpl9(); // GetChannelVolumeLevelScalar
+            [PreserveSig]
+            int SetMute([MarshalAs(UnmanagedType.Bool)] bool bMuted, ref Guid pguidEventContext);
+            [PreserveSig]
+            int GetMute([MarshalAs(UnmanagedType.Bool)] out bool pbMuted);
         }
 
         [ComImport]

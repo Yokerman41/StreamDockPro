@@ -77,8 +77,21 @@ impl Win32InputPlugin {
 
     pub fn send_media_key(action: &str) -> Result<(), String> {
         let normalized = action.trim().to_uppercase();
-        if normalized.starts_with("SPOTIFY_") {
+        if normalized.starts_with("SPOTIFY_") || normalized.starts_with("VOLUME_SLIDER_SPOTIFY") {
             return Self::execute_spotify_action(&normalized);
+        }
+
+        if let Some(level_str) = normalized
+            .strip_prefix("VOLUME_SET:")
+            .or_else(|| normalized.strip_prefix("PC_SET_VOL:"))
+            .or_else(|| normalized.strip_prefix("VOLUME_SLIDER_PC:"))
+        {
+            if let Ok(pct) = level_str.trim().parse::<f32>() {
+                #[cfg(windows)]
+                return Self::set_master_volume_scalar((pct / 100.0).clamp(0.0, 1.0));
+                #[cfg(not(windows))]
+                return Ok(());
+            }
         }
 
         info!("Win32 Media Key simulating: {normalized}");
@@ -86,7 +99,7 @@ impl Win32InputPlugin {
             "PLAY_PAUSE" => 0xB3,
             "NEXT_TRACK" => 0xB0,
             "PREV_TRACK" => 0xB1,
-            "VOLUME_MUTE" => 0xAD,
+            "VOLUME_MUTE" | "VOLUME_SLIDER_PC" => 0xAD,
             "VOLUME_DOWN" => 0xAE,
             "VOLUME_UP" => 0xAF,
             _ => 0,
@@ -106,6 +119,15 @@ impl Win32InputPlugin {
         info!("Executing exclusive Spotify action: {action}");
         #[cfg(windows)]
         {
+            if let Some(level_str) = action
+                .strip_prefix("SPOTIFY_SET_VOL:")
+                .or_else(|| action.strip_prefix("VOLUME_SLIDER_SPOTIFY:"))
+            {
+                if let Ok(pct) = level_str.trim().parse::<f32>() {
+                    return Self::set_spotify_volume_scalar((pct / 100.0).clamp(0.0, 1.0));
+                }
+            }
+
             match action {
                 "SPOTIFY_OPEN" => {
                     let hwnds = Self::find_spotify_windows();
@@ -120,7 +142,7 @@ impl Win32InputPlugin {
                 }
                 "SPOTIFY_VOL_UP" => return Self::adjust_spotify_volume(0.08),
                 "SPOTIFY_VOL_DOWN" => return Self::adjust_spotify_volume(-0.08),
-                "SPOTIFY_MUTE" => return Self::toggle_spotify_mute(),
+                "SPOTIFY_MUTE" | "VOLUME_SLIDER_SPOTIFY" => return Self::toggle_spotify_mute(),
                 _ => {
                     let app_cmd = match action {
                         "SPOTIFY_PLAY_PAUSE" => APPCOMMAND_MEDIA_PLAY_PAUSE,
@@ -279,6 +301,134 @@ impl Win32InputPlugin {
             };
             let _ = set_mute(vol_ptr, next, &empty_guid);
         })
+    }
+
+    #[cfg(windows)]
+    fn set_spotify_volume_scalar(level: f32) -> Result<(), String> {
+        let target = level.clamp(0.0, 1.0);
+        Self::with_spotify_audio_volumes(|vol_ptr, set_vol, _, set_mute, _| unsafe {
+            let empty_guid = GUID {
+                data1: 0,
+                data2: 0,
+                data3: 0,
+                data4: [0; 8],
+            };
+            let _ = set_vol(vol_ptr, target, &empty_guid);
+            if target > 0.0 {
+                let _ = set_mute(vol_ptr, 0, &empty_guid);
+            }
+        })
+    }
+
+    #[cfg(windows)]
+    fn set_master_volume_scalar(level: f32) -> Result<(), String> {
+        const CLSID_MMDEVICE_ENUMERATOR: GUID = GUID {
+            data1: 0xBCDE0395,
+            data2: 0xE52F,
+            data3: 0x467C,
+            data4: [0x8E, 0x3D, 0xC4, 0x57, 0x92, 0x91, 0x69, 0x2E],
+        };
+        const IID_IMMDEVICE_ENUMERATOR: GUID = GUID {
+            data1: 0xA95664D2,
+            data2: 0x9614,
+            data3: 0x4F35,
+            data4: [0xA7, 0x46, 0xDE, 0x8D, 0xB6, 0x36, 0x17, 0xE6],
+        };
+        const IID_IAUDIO_ENDPOINT_VOLUME: GUID = GUID {
+            data1: 0x5CDF2C82,
+            data2: 0x841E,
+            data3: 0x4546,
+            data4: [0x97, 0x22, 0x0C, 0xF7, 0x40, 0x78, 0x22, 0x9A],
+        };
+
+        let target = level.clamp(0.0, 1.0);
+        unsafe {
+            let _ = CoInitializeEx(std::ptr::null_mut(), 0);
+
+            let mut enumerator: *mut c_void = std::ptr::null_mut();
+            let hr = CoCreateInstance(
+                &CLSID_MMDEVICE_ENUMERATOR,
+                std::ptr::null_mut(),
+                23,
+                &IID_IMMDEVICE_ENUMERATOR,
+                &mut enumerator,
+            );
+            if hr < 0 || enumerator.is_null() {
+                return Err("No se pudo abrir el controlador maestro de audio".to_string());
+            }
+
+            let enum_vtbl = *(enumerator as *mut *mut usize);
+            let get_default_endpoint: unsafe extern "system" fn(
+                *mut c_void,
+                u32,
+                u32,
+                *mut *mut c_void,
+            ) -> i32 = std::mem::transmute(*enum_vtbl.add(4));
+            let release_enum: unsafe extern "system" fn(*mut c_void) -> u32 =
+                std::mem::transmute(*enum_vtbl.add(2));
+
+            let mut device: *mut c_void = std::ptr::null_mut();
+            let hr_dev = get_default_endpoint(enumerator, 0, 1, &mut device);
+            if hr_dev < 0 || device.is_null() {
+                release_enum(enumerator);
+                return Err("No se encontró dispositivo de salida de audio maestro".to_string());
+            }
+
+            let dev_vtbl = *(device as *mut *mut usize);
+            let activate: unsafe extern "system" fn(
+                *mut c_void,
+                *const GUID,
+                u32,
+                *const usize,
+                *mut *mut c_void,
+            ) -> i32 = std::mem::transmute(*dev_vtbl.add(3));
+            let release_dev: unsafe extern "system" fn(*mut c_void) -> u32 =
+                std::mem::transmute(*dev_vtbl.add(2));
+
+            let mut ep_vol: *mut c_void = std::ptr::null_mut();
+            let hr_ep = activate(
+                device,
+                &IID_IAUDIO_ENDPOINT_VOLUME,
+                23,
+                std::ptr::null(),
+                &mut ep_vol,
+            );
+            release_dev(device);
+            release_enum(enumerator);
+
+            if hr_ep < 0 || ep_vol.is_null() {
+                return Err("No se pudo activar IAudioEndpointVolume".to_string());
+            }
+
+            let ep_vtbl = *(ep_vol as *mut *mut usize);
+            let release_ep: unsafe extern "system" fn(*mut c_void) -> u32 =
+                std::mem::transmute(*ep_vtbl.add(2));
+            // IAudioEndpointVolume::SetMasterVolumeLevelScalar (slot 7)
+            let set_master_scalar: unsafe extern "system" fn(
+                *mut c_void,
+                f32,
+                *const GUID,
+            ) -> i32 = std::mem::transmute(*ep_vtbl.add(7));
+            // IAudioEndpointVolume::SetMute (slot 14)
+            let set_mute: unsafe extern "system" fn(
+                *mut c_void,
+                i32,
+                *const GUID,
+            ) -> i32 = std::mem::transmute(*ep_vtbl.add(14));
+
+            let empty_guid = GUID {
+                data1: 0,
+                data2: 0,
+                data3: 0,
+                data4: [0; 8],
+            };
+            let _ = set_master_scalar(ep_vol, target, &empty_guid);
+            if target > 0.0 {
+                let _ = set_mute(ep_vol, 0, &empty_guid);
+            }
+            release_ep(ep_vol);
+        }
+        Ok(())
     }
 
     #[cfg(windows)]

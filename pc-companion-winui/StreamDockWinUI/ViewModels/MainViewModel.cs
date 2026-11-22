@@ -108,6 +108,172 @@ namespace StreamDockWinUI.ViewModels
         [ObservableProperty]
         private ButtonModel? _movingButton;
 
+        [ObservableProperty]
+        private string _selectedCategoryTab = "AUDIO_PC";
+
+        private static string InferCategoryTab(ButtonModel? btn)
+        {
+            if (btn == null) return "AUDIO_PC";
+            var type = btn.ActionType ?? "NONE";
+            var val = btn.ActionValue ?? string.Empty;
+
+            return type switch
+            {
+                "MEDIA_CONTROL" when val.StartsWith("SPOTIFY_", StringComparison.OrdinalIgnoreCase) || val.StartsWith("VOLUME_SLIDER_SPOTIFY", StringComparison.OrdinalIgnoreCase) => "SPOTIFY",
+                "MEDIA_CONTROL" => "AUDIO_PC",
+                "LAUNCH_APP" when WindowController.IsWindowAction(val) => "WINDOWS",
+                "SYSTEM_COMMAND" when string.Equals(val, "SHOW_DESKTOP", StringComparison.OrdinalIgnoreCase) => "WINDOWS",
+                "LAUNCH_APP" or "LAUNCH_SHORTCUT" => "LAUNCH_APP",
+                "KEYBOARD_HOTKEY" => "KEYBOARD_HOTKEY",
+                "OBS_SCENE_SWITCH" => "OBS_SCENE_SWITCH",
+                "NAVIGATE" => "NAVIGATE",
+                "SYSTEM_COMMAND" => "SYSTEM_COMMAND",
+                "STREAMER_BOT_ACTION" => "STREAMER_BOT_ACTION",
+                _ => "AUDIO_PC"
+            };
+        }
+
+        [ObservableProperty]
+        private bool _hasPcVolumeBarInProfile;
+
+        [ObservableProperty]
+        private bool _hasSpotifyVolumeBarInProfile;
+
+        public bool HasAnyProfileVolumeBar => HasPcVolumeBarInProfile || HasSpotifyVolumeBarInProfile;
+
+        [ObservableProperty]
+        private int _pcVolumeLevel = 80;
+
+        [ObservableProperty]
+        private int _spotifyVolumeLevel = 85;
+
+        private bool _isRefreshingVolumeSliders;
+
+        partial void OnPcVolumeLevelChanged(int value)
+        {
+            if (_isRefreshingVolumeSliders) return;
+            var (ok, msg) = SpotifyController.SetMasterVolumePercent(value);
+            StatusMessage = ok ? $"🎚️ {msg}" : $"⚠️ {msg}";
+        }
+
+        partial void OnSpotifyVolumeLevelChanged(int value)
+        {
+            if (_isRefreshingVolumeSliders) return;
+            var (ok, msg) = SpotifyController.SetSpotifyVolumeScalar(value / 100f);
+            StatusMessage = ok ? $"🎚️ {msg}" : $"⚠️ {msg}";
+        }
+
+        public void RefreshProfileVolumeBarsState()
+        {
+            var profileButtons = _allButtons.Where(b => b.ProfileId == ActiveProfileId).ToList();
+            bool hasPc = profileButtons.Any(b =>
+                b.ActionType == "MEDIA_CONTROL" &&
+                string.Equals(b.ActionValue, "VOLUME_SLIDER_PC", StringComparison.OrdinalIgnoreCase));
+            bool hasSpotify = profileButtons.Any(b =>
+                b.ActionType == "MEDIA_CONTROL" &&
+                string.Equals(b.ActionValue, "VOLUME_SLIDER_SPOTIFY", StringComparison.OrdinalIgnoreCase));
+
+            HasPcVolumeBarInProfile = hasPc;
+            HasSpotifyVolumeBarInProfile = hasSpotify;
+            OnPropertyChanged(nameof(HasAnyProfileVolumeBar));
+
+            _isRefreshingVolumeSliders = true;
+            try
+            {
+                if (hasPc)
+                    PcVolumeLevel = SpotifyController.GetMasterVolumePercent();
+                if (hasSpotify)
+                    SpotifyVolumeLevel = SpotifyController.GetSpotifyVolumePercent();
+            }
+            finally
+            {
+                _isRefreshingVolumeSliders = false;
+            }
+        }
+
+        [RelayCommand]
+        public void MutePcFromBar()
+        {
+            keybd_event(0xAD, 0, 0, UIntPtr.Zero);
+            keybd_event(0xAD, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+            StatusMessage = "🔇 Audio Maestro de PC silenciado / reactivado";
+        }
+
+        [RelayCommand]
+        public void MuteSpotifyFromBar()
+        {
+            var (ok, msg) = SpotifyController.ExecuteAction("SPOTIFY_MUTE");
+            StatusMessage = ok ? $"🔇 {msg}" : $"⚠️ {msg}";
+        }
+
+        [RelayCommand]
+        public async Task RemovePcVolumeBarFromProfile()
+        {
+            var target = _allButtons.FirstOrDefault(b =>
+                b.ProfileId == ActiveProfileId &&
+                string.Equals(b.ActionValue, "VOLUME_SLIDER_PC", StringComparison.OrdinalIgnoreCase));
+            if (target != null)
+            {
+                SelectButton(target);
+                await DeleteButtonConfiguration();
+            }
+        }
+
+        [RelayCommand]
+        public async Task RemoveSpotifyVolumeBarFromProfile()
+        {
+            var target = _allButtons.FirstOrDefault(b =>
+                b.ProfileId == ActiveProfileId &&
+                string.Equals(b.ActionValue, "VOLUME_SLIDER_SPOTIFY", StringComparison.OrdinalIgnoreCase));
+            if (target != null)
+            {
+                SelectButton(target);
+                await DeleteButtonConfiguration();
+            }
+        }
+
+        [RelayCommand]
+        public async Task TogglePcVolumeBarInProfile()
+        {
+            if (HasPcVolumeBarInProfile)
+            {
+                await RemovePcVolumeBarFromProfile();
+                return;
+            }
+
+            var target = _allButtons
+                .Where(b => b.ProfileId == ActiveProfileId)
+                .OrderBy(b => b.Position)
+                .FirstOrDefault(b => !b.IsConfigured) ?? SelectedButton;
+
+            if (target != null)
+            {
+                SelectButton(target);
+                SelectActionPreset("VOLUME_SLIDER_PC");
+            }
+        }
+
+        [RelayCommand]
+        public async Task ToggleSpotifyVolumeBarInProfile()
+        {
+            if (HasSpotifyVolumeBarInProfile)
+            {
+                await RemoveSpotifyVolumeBarFromProfile();
+                return;
+            }
+
+            var target = _allButtons
+                .Where(b => b.ProfileId == ActiveProfileId)
+                .OrderBy(b => b.Position)
+                .FirstOrDefault(b => !b.IsConfigured) ?? SelectedButton;
+
+            if (target != null)
+            {
+                SelectButton(target);
+                SelectActionPreset("VOLUME_SLIDER_SPOTIFY");
+            }
+        }
+
         partial void OnSelectedProfileChanged(ProfileModel? value)
         {
             if (value != null)
@@ -138,6 +304,8 @@ namespace StreamDockWinUI.ViewModels
                 {
                     GridButtons.Add(btn);
                 }
+
+                RefreshProfileVolumeBarsState();
 
                 if (GridButtons.Any())
                     SelectButton(GridButtons.First());
@@ -890,57 +1058,59 @@ namespace StreamDockWinUI.ViewModels
 
             button.IsSelected = true;
             SelectedButton = button;
+            SelectedCategoryTab = InferCategoryTab(button);
             StatusMessage = $"Configurando Botón #{button.Position + 1}";
         }
 
         [RelayCommand]
-        public void SelectActionType(string? actionType)
+        public void SelectActionType(string? categoryTab)
         {
-            if (SelectedButton != null && !string.IsNullOrWhiteSpace(actionType))
+            if (string.IsNullOrWhiteSpace(categoryTab)) return;
+
+            SelectedCategoryTab = categoryTab;
+
+            if (categoryTab == "SPOTIFY")
             {
-                SelectedButton.ActionType = actionType;
-
-                switch (actionType)
-                {
-                    case "MEDIA_CONTROL":
-                        IsSpotifyInstalled = SpotifyController.IsSpotifyInstalled();
-                        SelectedButton.ActionValue = "PLAY_PAUSE";
-                        SelectedButton.Label = "Play / Pausa";
-                        SelectedButton.IconName = "play";
-                        SelectedButton.BackgroundColor = "#9B59B6";
-                        break;
-                    case "SYSTEM_COMMAND":
-                        SelectedButton.ActionValue = "LOCK_WORKSTATION";
-                        SelectedButton.Label = "Bloquear PC";
-                        SelectedButton.IconName = "lock";
-                        SelectedButton.BackgroundColor = "#E74C3C";
-                        break;
-                    case "KEYBOARD_HOTKEY":
-                        SelectedButton.ActionValue = "CTRL+SHIFT+M";
-                        SelectedButton.Label = "Mute Micrófono";
-                        SelectedButton.IconName = "mic_off";
-                        SelectedButton.BackgroundColor = "#34495E";
-                        break;
-                    case "OBS_SCENE_SWITCH":
-                        SelectedButton.ActionValue = "Escena Principal";
-                        SelectedButton.Label = "OBS";
-                        SelectedButton.IconName = "tv";
-                        SelectedButton.BackgroundColor = "#3498DB";
-                        if (ObsScenes.Count == 0 && !IsObsScanning)
-                        {
-                            _ = ScanObsWebSocketAsync();
-                        }
-                        break;
-                    case "LAUNCH_APP":
-                        if (string.IsNullOrWhiteSpace(SelectedButton.IconName) || SelectedButton.IconName == "none")
-                        {
-                            SelectedButton.IconName = "launch";
-                        }
-                        break;
-                }
-
-                StatusMessage = $"Tipo de Acción cambiado a: {actionType}";
+                IsSpotifyInstalled = SpotifyController.IsSpotifyInstalled();
             }
+            else if (categoryTab == "OBS_SCENE_SWITCH" && ObsScenes.Count == 0 && !IsObsScanning)
+            {
+                _ = ScanObsWebSocketAsync();
+            }
+
+            // Si el botón aún está vacío (NONE), asignamos el ActionType base sin sobrescribir etiquetas existentes
+            if (SelectedButton != null && (SelectedButton.ActionType == "NONE" || string.IsNullOrWhiteSpace(SelectedButton.ActionType)))
+            {
+                SelectedButton.ActionType = categoryTab switch
+                {
+                    "AUDIO_PC" or "SPOTIFY" => "MEDIA_CONTROL",
+                    "WINDOWS" => "LAUNCH_APP",
+                    _ => categoryTab
+                };
+            }
+
+            StatusMessage = $"Categoría abierta: {categoryTab}";
+        }
+
+        [RelayCommand]
+        public void SelectColorPreset(string? hexColor)
+        {
+            if (SelectedButton == null || string.IsNullOrWhiteSpace(hexColor)) return;
+            SelectedButton.BackgroundColor = hexColor;
+            StatusMessage = $"🎨 Color del botón cambiado a {hexColor}";
+        }
+
+        [RelayCommand]
+        public void SelectNavigateProfile(ProfileModel? targetProfile)
+        {
+            if (SelectedButton == null || targetProfile == null) return;
+            SelectedButton.ActionType = "NAVIGATE";
+            SelectedButton.ActionValue = targetProfile.Id;
+            SelectedButton.Label = targetProfile.Name;
+            SelectedButton.IconName = "folder";
+            SelectedButton.IconImage = null;
+            SelectedButton.BackgroundColor = "#4F46E5";
+            StatusMessage = $"📄 Botón configurado para ir a la página '{targetProfile.Name}'";
         }
 
         [RelayCommand]
@@ -1027,6 +1197,36 @@ namespace StreamDockWinUI.ViewModels
         {
             if (SelectedButton == null || string.IsNullOrWhiteSpace(presetValue)) return;
 
+            // Determinar automáticamente el ActionType del protocolo según el preset elegido
+            if (presetValue is "PLAY_PAUSE" or "PREV_TRACK" or "NEXT_TRACK" or "VOLUME_UP" or "VOLUME_DOWN" or "VOLUME_MUTE" or "VOLUME_SLIDER_PC" or "VOLUME_SLIDER_SPOTIFY" ||
+                presetValue.StartsWith("SPOTIFY_", StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedButton.ActionType = "MEDIA_CONTROL";
+                SelectedButton.IconImage = null;
+            }
+            else if (presetValue is "WIN_MINIMIZE" or "WIN_MAXIMIZE" or "WIN_CLOSE")
+            {
+                SelectedButton.ActionType = "LAUNCH_APP";
+                SelectedButton.IconImage = null;
+            }
+            else if (presetValue is "LOCK_WORKSTATION" or "SLEEP" or "SHUTDOWN" or "REBOOT" or "SHOW_DESKTOP")
+            {
+                SelectedButton.ActionType = "SYSTEM_COMMAND";
+                SelectedButton.IconImage = null;
+            }
+            else if (presetValue is "Escena Principal" or "START_RECORD" or "START_STREAM" or "TOGGLE_MUTE")
+            {
+                SelectedButton.ActionType = "OBS_SCENE_SWITCH";
+                SelectedButton.IconImage = null;
+            }
+            else if (SelectedCategoryTab == "KEYBOARD_HOTKEY" ||
+                     presetValue.Contains('+') ||
+                     presetValue is "CTRL+SHIFT+M" or "WIN+SHIFT+S" or "ALT+F4" or "CTRL+C" or "CTRL+V" or "ALT+TAB")
+            {
+                SelectedButton.ActionType = "KEYBOARD_HOTKEY";
+                SelectedButton.IconImage = null;
+            }
+
             SelectedButton.ActionValue = presetValue;
 
             if (SelectedButton.ActionType == "MEDIA_CONTROL")
@@ -1039,6 +1239,8 @@ namespace StreamDockWinUI.ViewModels
                     "VOLUME_UP" => "Subir Vol.",
                     "VOLUME_DOWN" => "Bajar Vol.",
                     "VOLUME_MUTE" => "Silenciar Audio",
+                    "VOLUME_SLIDER_PC" => "Barra Vol. PC",
+                    "VOLUME_SLIDER_SPOTIFY" => "Barra Spotify",
                     "SPOTIFY_PLAY_PAUSE" => "Spotify Play",
                     "SPOTIFY_NEXT" => "Spotify Sig.",
                     "SPOTIFY_PREV" => "Spotify Ant.",
@@ -1053,7 +1255,7 @@ namespace StreamDockWinUI.ViewModels
                     "PLAY_PAUSE" or "SPOTIFY_PLAY_PAUSE" => "play",
                     "PREV_TRACK" or "SPOTIFY_PREV" => "prev",
                     "NEXT_TRACK" or "SPOTIFY_NEXT" => "next",
-                    "VOLUME_UP" or "SPOTIFY_VOL_UP" => "vol_up",
+                    "VOLUME_UP" or "SPOTIFY_VOL_UP" or "VOLUME_SLIDER_PC" or "VOLUME_SLIDER_SPOTIFY" => "vol_up",
                     "VOLUME_DOWN" or "SPOTIFY_VOL_DOWN" => "vol_down",
                     "VOLUME_MUTE" or "SPOTIFY_MUTE" => "mute",
                     "SPOTIFY_OPEN" => "play",
@@ -1064,6 +1266,8 @@ namespace StreamDockWinUI.ViewModels
                     "VOLUME_MUTE" or "SPOTIFY_MUTE" => "#E74C3C",
                     "VOLUME_UP" => "#2ECC71",
                     "VOLUME_DOWN" => "#E67E22",
+                    "VOLUME_SLIDER_PC" => "#7C3AED",
+                    "VOLUME_SLIDER_SPOTIFY" => "#1DB954",
                     var s when s.StartsWith("SPOTIFY_") => "#1DB954",
                     _ => "#9B59B6"
                 };
@@ -1094,20 +1298,25 @@ namespace StreamDockWinUI.ViewModels
                     "SHOW_DESKTOP" => "computer",
                     _ => "power"
                 };
-                SelectedButton.BackgroundColor = "#E74C3C";
+                SelectedButton.BackgroundColor = presetValue == "SHOW_DESKTOP" ? "#3498DB" : "#E74C3C";
             }
             else if (SelectedButton.ActionType == "KEYBOARD_HOTKEY")
             {
                 SelectedButton.Label = presetValue switch
                 {
-                    "CTRL+SHIFT+M" => "Mute Micrófono",
-                    "WIN+SHIFT+S" => "Captura Pantalla",
+                    "CTRL+SHIFT+M" => "Mute Mic",
+                    "WIN+SHIFT+S" => "Captura",
+                    "ALT+F4" => "Cerrar App",
+                    "CTRL+C" => "Copiar",
+                    "CTRL+V" => "Pegar",
+                    "ALT+TAB" => "Cambiar App",
                     _ => presetValue
                 };
                 SelectedButton.IconName = presetValue switch
                 {
                     "CTRL+SHIFT+M" => "mic_off",
                     "WIN+SHIFT+S" => "computer",
+                    "ALT+F4" => "error",
                     _ => "keyboard"
                 };
                 SelectedButton.BackgroundColor = "#34495E";
@@ -1163,7 +1372,16 @@ namespace StreamDockWinUI.ViewModels
                 };
             }
 
-            StatusMessage = $"Tarjeta de preajuste seleccionada: {SelectedButton.Label}";
+            RefreshProfileVolumeBarsState();
+            if (presetValue is "VOLUME_SLIDER_PC" or "VOLUME_SLIDER_SPOTIFY")
+            {
+                _ = SaveButtonConfiguration();
+                StatusMessage = $"🎚️ Barra deslizante '{SelectedButton.Label}' agregada al espacio de volumen del perfil";
+            }
+            else
+            {
+                StatusMessage = $"✓ Acción seleccionada: {SelectedButton.Label} ({presetValue})";
+            }
         }
 
         [RelayCommand]
@@ -1314,6 +1532,7 @@ namespace StreamDockWinUI.ViewModels
 
             try
             {
+                RefreshProfileVolumeBarsState();
                 await _webSocketService.SendMessageAsync(syncPayload);
                 StatusMessage = $"✓ Botón #{SelectedButton.Position + 1} guardado y sincronizado";
             }
