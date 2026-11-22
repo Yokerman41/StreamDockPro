@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <RootNamespace>StreamDockWinUI</RootNamespace>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>app_icon.ico</ApplicationIcon>

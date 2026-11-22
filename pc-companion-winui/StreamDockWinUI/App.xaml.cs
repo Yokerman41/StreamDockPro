@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using StreamDockWinUI.Services;
+using Application = System.Windows.Application;
 
 namespace StreamDockWinUI
 {

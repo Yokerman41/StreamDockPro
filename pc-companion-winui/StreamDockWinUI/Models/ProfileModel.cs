@@ -11,6 +11,9 @@ namespace StreamDockWinUI.Models
         private string _name = string.Empty;
 
         [ObservableProperty]
+        private string? _autoSwitchProcess;
+
+        [ObservableProperty]
         private bool _isDefault;
 
         [ObservableProperty]

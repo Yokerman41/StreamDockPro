@@ -2,6 +2,7 @@ package com.streamdock.pro
 
 import android.graphics.Color
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -31,6 +32,10 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+
+        // Mantener la pantalla siempre encendida para que el teléfono funcione como un Stream Deck
+        // físico sobre el escritorio sin apagarse por inactividad.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         setContent {
             StreamDockTheme {
@@ -62,13 +67,10 @@ class MainActivity : ComponentActivity() {
                         obsScenes = obsScenes,
                         onFetchObsScenes = viewModel::fetchObsScenes,
                         onSwitchToScene = viewModel::switchToScene,
+                        onQuickAction = viewModel::triggerQuickAction,
                     )
                 }
             }
         }
     }
-
-    // Nota: ya no se desconecta en onDestroy. Ante un cambio de configuración (tema, idioma,
-    // multiventana...) la Activity se destruye pero el ViewModel sobrevive y quedaba desconectado.
-    // La desconexión real ocurre en StreamDockViewModel.onCleared().
 }

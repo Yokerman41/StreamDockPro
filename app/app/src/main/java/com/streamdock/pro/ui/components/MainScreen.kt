@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -44,9 +42,12 @@ fun MainScreen(
     obsScenes: List<String>,
     onFetchObsScenes: () -> Unit,
     onSwitchToScene: (String) -> Unit,
+    onQuickAction: (actionType: String, actionValue: String) -> Unit = { _, _ -> },
 ) {
     var selectedRoute by rememberSaveable { mutableStateOf(NavItem.Panel.route) }
-    val canDeleteProfile = selectedRoute == NavItem.Panel.route && (workspace?.profiles?.size ?: 0) > 1
+    var isEditMode by rememberSaveable { mutableStateOf(false) }
+    val isPanelRoute = selectedRoute == NavItem.Panel.route
+    val canDeleteProfile = isPanelRoute && (workspace?.profiles?.size ?: 0) > 1
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -65,12 +66,18 @@ fun MainScreen(
                 GridScreen(
                     workspace = workspace,
                     isLandscape = isLandscape,
+                    isEditMode = isEditMode,
                     onButtonPress = onButtonPress,
                     onCreatePage = onCreatePage,
                     onSelectPage = onSelectPage,
                     onUpdateButton = onUpdateButton,
                     onDeleteButton = onDeleteButton,
                     onMoveButton = onMoveButton,
+                )
+            }
+            NavItem.Aplicaciones.route -> {
+                ApplicationsScreen(
+                    onQuickAction = onQuickAction,
                 )
             }
             NavItem.OBS.route -> {
@@ -95,17 +102,6 @@ fun MainScreen(
                     onUsbSelected = onUsbSelected,
                 )
             }
-            else -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Pantalla de ${selectedRoute.uppercase()}",
-                        color = Color.White,
-                    )
-                }
-            }
         }
     }
 
@@ -126,6 +122,9 @@ fun MainScreen(
                     icon = navItem.icon,
                     connectionState = connectionState,
                     showDeleteButton = canDeleteProfile,
+                    showEditButton = isPanelRoute,
+                    isEditMode = isEditMode,
+                    onToggleEditMode = { isEditMode = !isEditMode },
                     compact = true,
                     onDeleteClick = onDeleteProfile,
                 )
@@ -142,6 +141,9 @@ fun MainScreen(
                     icon = navItem.icon,
                     connectionState = connectionState,
                     showDeleteButton = canDeleteProfile,
+                    showEditButton = isPanelRoute,
+                    isEditMode = isEditMode,
+                    onToggleEditMode = { isEditMode = !isEditMode },
                     compact = false,
                     onDeleteClick = onDeleteProfile,
                 )

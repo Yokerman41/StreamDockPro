@@ -21,13 +21,30 @@
             <!-- Header / Selected Client Selector Bar -->
             <Border Grid.Row="0" Background="#181825" CornerRadius="10" Padding="15" Margin="0,0,0,15">
                 <DockPanel>
-                    <TextBlock Text="Stream Dock Pro" FontSize="20" FontWeight="Bold" Foreground="#89B4FA" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Stream Dock Pro" FontSize="20" FontWeight="Bold" Foreground="#89B4FA" VerticalAlignment="Center"/>
+                        <Border Background="#212234" CornerRadius="6" Padding="8,4" Margin="14,0,0,0" BorderThickness="1" BorderBrush="#313244">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📡 IP Local: " Foreground="#A6ADC8" FontSize="11" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding LocalIpDisplay}" Foreground="#00E676" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                                <Button Command="{Binding CopyLocalIpCommand}" Content="📋 Copiar" ToolTip="Copiar dirección IP para conectar desde la App Android"
+                                        Background="#313244" Foreground="#CDD6F4" BorderThickness="0" FontSize="10" Padding="6,2" Margin="8,0,0,0" Cursor="Hand"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <CheckBox IsChecked="{Binding IsAutoProfileSwitchEnabled}"
+                                  Content="🔄 Auto-Perfil por Ventana"
+                                  Foreground="#A6E3A1"
+                                  FontWeight="SemiBold"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,14,0"
+                                  ToolTip="Cambia automáticamente la página en tu teléfono según el programa o juego abierto en primer plano"/>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                            <TextBlock Text="Dispositivo Activo:" Foreground="#A6ADC8" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                            <TextBlock Text="Dispositivo:" Foreground="#A6ADC8" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding ConnectedClients}"
                                       SelectedItem="{Binding SelectedClient}"
-                                      Width="300"
+                                      Width="230"
                                       Height="34"
                                       Background="#313244"
                                       Foreground="#CDD6F4"
@@ -47,7 +64,7 @@
                             </ComboBox>
                             <Button Command="{Binding RefreshClientListCommand}" Content="🔄" ToolTip="Actualizar Lista de Dispositivos" Background="#45475A" Foreground="White" BorderThickness="0" Padding="8,4" Margin="6,0,0,0"/>
                         </StackPanel>
-                        <Button Content="🔄 Reconectar WS" Background="#45475A" Foreground="White" BorderThickness="0" Padding="12,6"/>
+                        <Button Click="MinimizeToTray_Click" Content="🗕 Bandeja" ToolTip="Ocultar en la bandeja del sistema (el servidor seguirá activo)" Background="#313244" Foreground="#89B4FA" FontWeight="SemiBold" BorderThickness="0" Padding="10,6" Cursor="Hand"/>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -84,10 +101,27 @@
                                     </TextBox.InputBindings>
                                 </TextBox>
 
+                                <TextBlock Text="Auto-Activar con App (.exe):" Foreground="#A6ADC8" FontSize="10" Margin="0,0,0,4"/>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding EditingProfileAutoProcess, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Ejemplo: obs64.exe, Spotify.exe, chrome.exe"
+                                             Background="#313244" Foreground="#A6E3A1" FontSize="11" BorderThickness="0" Padding="6,5"/>
+                                    <Border Grid.Column="1" Background="#45475A" CornerRadius="4" Margin="4,0,0,0">
+                                        <Button Content="📁" Command="{Binding BrowseProfileProcessCommand}"
+                                                ToolTip="Seleccionar programa (.exe) para activar este perfil automáticamente"
+                                                Background="Transparent" Foreground="White" BorderThickness="0" Padding="7,4" Cursor="Hand"/>
+                                    </Border>
+                                </Grid>
+
                                 <UniformGrid Columns="2">
                                     <Border Background="#A6E3A1" CornerRadius="6" Margin="0,0,3,0">
                                         <Button Content="💾 Guardar" Command="{Binding SaveProfileNameCommand}"
-                                                ToolTip="Guardar nuevo nombre del perfil"
+                                                ToolTip="Guardar nombre y programa asociado al perfil"
                                                 Background="Transparent" Foreground="#11111B" FontWeight="Bold" FontSize="11"
                                                 BorderThickness="0" Padding="6,6" Cursor="Hand"/>
                                     </Border>
@@ -135,7 +169,7 @@
                         
                         <DockPanel Grid.Row="0" Margin="0,0,0,15">
                             <TextBlock Text="CUADRÍCULA TÁCTIL (4x5)" FontWeight="Bold" Foreground="#A6ADC8" VerticalAlignment="Center"/>
-                            <TextBlock Text="💡 Arrastra ejecutables .exe o accesos directos para cargar icono" Foreground="#6C7086" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Text="💡 Arrastra botones para reordenarlos o suelta archivos .exe/.lnk" Foreground="#6C7086" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         </DockPanel>
                         
                         <!-- Reactive 4x5 Button Grid -->
@@ -166,6 +200,7 @@
                                         <Button Command="{Binding DataContext.SelectButtonCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}"
                                                 PreviewMouseLeftButtonDown="Button_PreviewMouseLeftButtonDown"
+                                                PreviewMouseMove="Button_PreviewMouseMove"
                                                 PreviewMouseLeftButtonUp="Button_PreviewMouseLeftButtonUp"
                                                 Background="Transparent" BorderThickness="0" Cursor="Hand">
                                             <Border Padding="6">
@@ -210,31 +245,152 @@
                             <!-- Action Type Category Selector Buttons -->
                             <TextBlock Text="Tipo de Acción:" Foreground="#CDD6F4" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <UniformGrid Columns="2" Margin="0,0,0,15">
-                                <Border Background="#313244" CornerRadius="6" Margin="2">
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="MEDIA_CONTROL">
+                                                    <Setter Property="Background" Value="#3B2E58"/>
+                                                    <Setter Property="BorderBrush" Value="#CBA6F7"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Button Content="🎵 Multimedia" Command="{Binding SelectActionTypeCommand}" CommandParameter="MEDIA_CONTROL"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold"/>
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
-                                <Border Background="#313244" CornerRadius="6" Margin="2">
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="LAUNCH_APP">
+                                                    <Setter Property="Background" Value="#1E3A5F"/>
+                                                    <Setter Property="BorderBrush" Value="#89B4FA"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Button Content="🚀 Aplicación" Command="{Binding SelectActionTypeCommand}" CommandParameter="LAUNCH_APP"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold"/>
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
-                                <Border Background="#313244" CornerRadius="6" Margin="2">
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="KEYBOARD_HOTKEY">
+                                                    <Setter Property="Background" Value="#2A3B4C"/>
+                                                    <Setter Property="BorderBrush" Value="#F9E2AF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Button Content="⌨️ Atajo Win32" Command="{Binding SelectActionTypeCommand}" CommandParameter="KEYBOARD_HOTKEY"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold"/>
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
-                                <Border Background="#313244" CornerRadius="6" Margin="2">
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="OBS_SCENE_SWITCH">
+                                                    <Setter Property="Background" Value="#1B3B48"/>
+                                                    <Setter Property="BorderBrush" Value="#89DCEB"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Button Content="🎥 OBS" Command="{Binding SelectActionTypeCommand}" CommandParameter="OBS_SCENE_SWITCH"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold"/>
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
-                                <Border Background="#313244" CornerRadius="6" Margin="2">
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="STREAMER_BOT_ACTION">
+                                                    <Setter Property="Background" Value="#1E3B2E"/>
+                                                    <Setter Property="BorderBrush" Value="#A6E3A1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Button Content="🤖 Streamer.bot" Command="{Binding SelectActionTypeCommand}" CommandParameter="STREAMER_BOT_ACTION"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold"/>
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
-                                <Border Background="#313244" CornerRadius="6" Margin="2">
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#313244"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="SYSTEM_COMMAND">
+                                                    <Setter Property="Background" Value="#4A2533"/>
+                                                    <Setter Property="BorderBrush" Value="#F38BA8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Button Content="⚙️ Sistema" Command="{Binding SelectActionTypeCommand}" CommandParameter="SYSTEM_COMMAND"
-                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold"/>
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="6,8" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
                             </UniformGrid>
+
+                            <!-- Sub-Menu Card Options for KEYBOARD_HOTKEY (Grabador Interactivo de Teclas) -->
+                            <StackPanel Margin="0,5,0,15">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedButton.ActionType}" Value="KEYBOARD_HOTKEY">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+
+                                <TextBlock Text="GRABADOR INTERACTIVO DE ATAJOS" FontWeight="Bold" Foreground="#F9E2AF" FontSize="11" Margin="0,0,0,8"/>
+                                <Border CornerRadius="8" Padding="10" Margin="0,0,0,8" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#212234"/>
+                                            <Setter Property="BorderBrush" Value="#313244"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRecordingHotkey}" Value="True">
+                                                    <Setter Property="Background" Value="#4A1E2B"/>
+                                                    <Setter Property="BorderBrush" Value="#F38BA8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Button Command="{Binding ToggleHotkeyRecordingCommand}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Center" Cursor="Hand">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock FontWeight="Bold" FontSize="12" HorizontalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="🔴 Grabar Combinación de Teclas"/>
+                                                        <Setter Property="Foreground" Value="#F9E2AF"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRecordingHotkey}" Value="True">
+                                                                <Setter Property="Text" Value="⌨️ ¡Presiona tus teclas ahora! (ESC cancela)"/>
+                                                                <Setter Property="Foreground" Value="#F38BA8"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="Haz clic aquí y pulsa ej. Ctrl + Shift + M en tu teclado" Foreground="#A6ADC8" FontSize="10" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Border>
+                            </StackPanel>
 
                             <!-- Sub-Menu Card Options for MEDIA_CONTROL -->
                             <StackPanel Margin="0,5,0,15">

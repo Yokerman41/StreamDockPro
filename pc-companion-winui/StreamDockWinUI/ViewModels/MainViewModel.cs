@@ -3,15 +3,21 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 using StreamDockWinUI.Models;
 using StreamDockWinUI.Services;
+using Application = System.Windows.Application;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace StreamDockWinUI.ViewModels
 {
@@ -79,6 +85,21 @@ namespace StreamDockWinUI.ViewModels
         [ObservableProperty]
         private string _editingProfileName = string.Empty;
 
+        [ObservableProperty]
+        private string _editingProfileAutoProcess = string.Empty;
+
+        [ObservableProperty]
+        private bool _isAutoProfileSwitchEnabled = true;
+
+        [ObservableProperty]
+        private bool _isRecordingHotkey = false;
+
+        [ObservableProperty]
+        private string _localIpDisplay = "127.0.0.1:8081";
+
+        private DispatcherTimer? _autoSwitchTimer;
+        private string? _lastForegroundProcess;
+
         private long _workspaceVersion = 1;
 
         [ObservableProperty]
@@ -93,11 +114,13 @@ namespace StreamDockWinUI.ViewModels
             {
                 ActiveProfileId = value.Id;
                 EditingProfileName = value.Name;
+                EditingProfileAutoProcess = value.AutoSwitchProcess ?? string.Empty;
                 UpdateVisibleButtons();
             }
             else
             {
                 EditingProfileName = string.Empty;
+                EditingProfileAutoProcess = string.Empty;
             }
         }
 
@@ -202,19 +225,176 @@ namespace StreamDockWinUI.ViewModels
         public MainViewModel()
         {
             _webSocketService = new WebSocketService();
+            DetectLocalIpAddress();
             LoadObsSettings();
             InitializeClients();
             SubscribeWebSocketEvents();
             SaveAndSyncObsConfig();
+            StartAutoProfileMonitor();
         }
 
         public MainViewModel(WebSocketService webSocketService)
         {
             _webSocketService = webSocketService;
+            DetectLocalIpAddress();
             LoadObsSettings();
             InitializeClients();
             SubscribeWebSocketEvents();
             SaveAndSyncObsConfig();
+            StartAutoProfileMonitor();
+        }
+
+        public void DetectLocalIpAddress()
+        {
+            try
+            {
+                string? bestIp = null;
+                foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus != OperationalStatus.Up) continue;
+                    if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+                    var props = ni.GetIPProperties();
+                    if (props.GatewayAddresses.Count == 0) continue;
+
+                    foreach (var ua in props.UnicastAddresses)
+                    {
+                        if (ua.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ua.Address))
+                        {
+                            bestIp = ua.Address.ToString();
+                            break;
+                        }
+                    }
+                    if (bestIp != null) break;
+                }
+
+                if (bestIp == null)
+                {
+                    bestIp = Dns.GetHostEntry(Dns.GetHostName())
+                        .AddressList
+                        .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                        ?.ToString() ?? "127.0.0.1";
+                }
+
+                LocalIpDisplay = $"{bestIp}:8081";
+            }
+            catch
+            {
+                LocalIpDisplay = "127.0.0.1:8081";
+            }
+        }
+
+        private void StartAutoProfileMonitor()
+        {
+            _autoSwitchTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(1500)
+            };
+            _autoSwitchTimer.Tick += async (_, _) => await CheckForegroundAppForAutoProfileAsync();
+            _autoSwitchTimer.Start();
+        }
+
+        private async Task CheckForegroundAppForAutoProfileAsync()
+        {
+            if (!IsAutoProfileSwitchEnabled || Profiles.Count <= 1) return;
+
+            var procName = WindowController.GetForegroundProcessName();
+            if (string.IsNullOrWhiteSpace(procName) ||
+                string.Equals(procName, _lastForegroundProcess, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _lastForegroundProcess = procName;
+
+            var matched = Profiles.FirstOrDefault(p =>
+                !string.IsNullOrWhiteSpace(p.AutoSwitchProcess) &&
+                (string.Equals(Path.GetFileNameWithoutExtension(p.AutoSwitchProcess.Trim()), procName, StringComparison.OrdinalIgnoreCase) ||
+                 procName.Contains(Path.GetFileNameWithoutExtension(p.AutoSwitchProcess.Trim()), StringComparison.OrdinalIgnoreCase)));
+
+            if (matched != null && SelectedProfile?.Id != matched.Id)
+            {
+                SelectedProfile = matched;
+                StatusMessage = $"🔄 Auto-Perfil activado por '{procName}.exe' → '{matched.Name}'";
+                await SyncFullWorkspace();
+            }
+        }
+
+        [RelayCommand]
+        public void CopyLocalIp()
+        {
+            try
+            {
+                System.Windows.Clipboard.SetText(LocalIpDisplay);
+                StatusMessage = $"📋 Dirección IP copiada al portapapeles: {LocalIpDisplay} (introdúcela en la pestaña Config de la App)";
+            }
+            catch
+            {
+            }
+        }
+
+        [RelayCommand]
+        public void ToggleHotkeyRecording()
+        {
+            IsRecordingHotkey = !IsRecordingHotkey;
+            StatusMessage = IsRecordingHotkey
+                ? "🔴 Grabando atajo: presiona cualquier combinación de teclas en tu teclado..."
+                : "Grabación de atajo cancelada";
+        }
+
+        public void ApplyRecordedHotkey(string hotkeyString)
+        {
+            IsRecordingHotkey = false;
+            if (SelectedButton == null || string.IsNullOrWhiteSpace(hotkeyString)) return;
+
+            SelectedButton.ActionType = "KEYBOARD_HOTKEY";
+            SelectedButton.ActionValue = hotkeyString;
+            if (string.IsNullOrWhiteSpace(SelectedButton.Label) || SelectedButton.Label.StartsWith("Botón"))
+            {
+                SelectedButton.Label = hotkeyString;
+            }
+            if (string.IsNullOrWhiteSpace(SelectedButton.IconName) || SelectedButton.IconName == "none")
+            {
+                SelectedButton.IconName = "keyboard";
+            }
+            StatusMessage = $"⌨️ Atajo capturado automáticamente: {hotkeyString}";
+        }
+
+        [RelayCommand]
+        public void BrowseProfileProcess()
+        {
+            if (SelectedProfile == null) return;
+            var dialog = new OpenFileDialog
+            {
+                Title = "Seleccionar Programa o Juego para Auto-Cambiar a este Perfil",
+                Filter = "Ejecutables (*.exe)|*.exe|Todos los Archivos (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                var exeName = Path.GetFileName(dialog.FileName);
+                EditingProfileAutoProcess = exeName;
+                SelectedProfile.AutoSwitchProcess = exeName;
+                _ = SaveProfileName();
+            }
+        }
+
+        public async Task SwapButtonsDirectAsync(ButtonModel source, ButtonModel target)
+        {
+            if (source == null || target == null || source == target) return;
+            if (source.ProfileId != target.ProfileId) return;
+
+            int fromPos = source.Position;
+            int toPos = target.Position;
+
+            source.Position = toPos;
+            source.Id = $"btn-{source.ProfileId}-{toPos}";
+
+            target.Position = fromPos;
+            target.Id = $"btn-{target.ProfileId}-{fromPos}";
+
+            UpdateVisibleButtons();
+            SelectButton(source);
+            await SyncFullWorkspace();
+            StatusMessage = $"✓ Botón #{fromPos + 1} intercambiado con #{toPos + 1}";
         }
 
         private void InitializeClients()
@@ -282,9 +462,17 @@ namespace StreamDockWinUI.ViewModels
                 return;
             }
 
+            var autoProc = string.IsNullOrWhiteSpace(EditingProfileAutoProcess)
+                ? null
+                : EditingProfileAutoProcess.Trim();
+
             SelectedProfile.Name = trimmed;
+            SelectedProfile.AutoSwitchProcess = autoProc;
             EditingProfileName = trimmed;
-            StatusMessage = $"✓ Nombre del perfil actualizado a '{trimmed}'";
+            EditingProfileAutoProcess = autoProc ?? string.Empty;
+            StatusMessage = autoProc != null
+                ? $"✓ Perfil '{trimmed}' vinculado automáticamente a '{autoProc}'"
+                : $"✓ Nombre del perfil actualizado a '{trimmed}'";
             await SyncFullWorkspace();
         }
 
@@ -374,6 +562,7 @@ namespace StreamDockWinUI.ViewModels
                         {
                             id = p.Id,
                             name = p.Name,
+                            auto_switch_process = p.AutoSwitchProcess,
                             is_default = p.IsDefault,
                             icon_name = p.IconName,
                             background_color = p.BackgroundColor
@@ -480,6 +669,7 @@ namespace StreamDockWinUI.ViewModels
                                     {
                                         var p = new ProfileModel(pJson["id"]?.ToString() ?? "", pJson["name"]?.ToString() ?? "")
                                         {
+                                            AutoSwitchProcess = pJson["auto_switch_process"]?.ToString(),
                                             IsDefault = pJson["is_default"]?.Value<bool>() ?? false,
                                             IconName = pJson["icon_name"]?.ToString() ?? "home",
                                             BackgroundColor = pJson["background_color"]?.ToString() ?? "#1E1E2E"

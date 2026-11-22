@@ -133,6 +133,15 @@ class StreamDockViewModel(
         )
     }
 
+    fun triggerQuickAction(actionType: String, actionValue: String) {
+        repository.sendAction(
+            profileId = "quick_action",
+            position = 0,
+            actionType = actionType,
+            actionValue = actionValue,
+        )
+    }
+
     fun createNewPage(name: String, rows: Int = DEFAULT_ROWS, cols: Int = DEFAULT_COLS) {
         val safeRows = rows.coerceIn(1, MAX_GRID_SIZE)
         val safeCols = cols.coerceIn(1, MAX_GRID_SIZE)

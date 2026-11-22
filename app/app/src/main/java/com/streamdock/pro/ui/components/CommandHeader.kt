@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -44,6 +46,9 @@ fun CommandHeader(
     icon: ImageVector,
     connectionState: WebSocketClient.ConnectionState,
     showDeleteButton: Boolean = true,
+    showEditButton: Boolean = false,
+    isEditMode: Boolean = false,
+    onToggleEditMode: () -> Unit = {},
     compact: Boolean = false,
     onDeleteClick: () -> Unit,
 ) {
@@ -102,8 +107,37 @@ fun CommandHeader(
             )
         }
 
-        // Right side: Status + Trash
+        // Right side: Edit Mode + Status + Trash
         Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showEditButton) {
+                Surface(
+                    onClick = onToggleEditMode,
+                    color = if (isEditMode) Color(0xFFF59E0B) else Color(0xFF1A1B26),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.height(if (compact) 26.dp else 32.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = if (isEditMode) Icons.Default.Check else Icons.Default.Edit,
+                            contentDescription = "Modo Edición",
+                            tint = if (isEditMode) Color(0xFF11111B) else Color(0xFFF59E0B),
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isEditMode) "LISTO" else "EDITAR",
+                            color = if (isEditMode) Color(0xFF11111B) else Color(0xFFF59E0B),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+
             Surface(
                 color = Color(0xFF151921),
                 shape = RoundedCornerShape(20.dp),

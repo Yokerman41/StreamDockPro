@@ -48,6 +48,23 @@ namespace StreamDockWinUI.Services
         [DllImport("user32.dll")]
         private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+        public static string? GetForegroundProcessName()
+        {
+            try
+            {
+                IntPtr fg = GetForegroundWindow();
+                if (fg == IntPtr.Zero) return null;
+                GetWindowThreadProcessId(fg, out uint pid);
+                if (pid == 0 || pid == (uint)Environment.ProcessId) return null;
+                using var proc = Process.GetProcessById((int)pid);
+                return proc.ProcessName;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public static bool IsWindowAction(string? actionValue)
         {
             if (string.IsNullOrWhiteSpace(actionValue)) return false;

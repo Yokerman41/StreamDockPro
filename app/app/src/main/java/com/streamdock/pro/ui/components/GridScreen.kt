@@ -50,6 +50,7 @@ import com.streamdock.pro.data.models.Workspace
 fun GridScreen(
     workspace: Workspace?,
     isLandscape: Boolean = false,
+    isEditMode: Boolean = false,
     onButtonPress: (position: Int) -> Unit,
     onCreatePage: (String, Int, Int) -> Unit,
     onSelectPage: (String) -> Unit,
@@ -114,6 +115,24 @@ fun GridScreen(
                 },
                 onAddClick = { showNamingDialog = true },
             )
+
+            // Banner de Modo Edición rápida o Modo Mover
+            if (isEditMode && movingFromPosition == null) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    color = Color(0xFF2D2310),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "✏️ Modo Edición activo: toca cualquier botón para editarlo o muévelo con pulsación corta",
+                        color = Color(0xFFF59E0B),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                }
+            }
 
             // Banner de Modo Mover cuando se mantuvo presionado un botón por más de 6 segundos
             movingFromPosition?.let { fromPos ->
@@ -218,6 +237,16 @@ fun GridScreen(
                                         onMoveButton(activeProfile.id, fromPos, index)
                                     }
                                     movingFromPosition = null
+                                } else if (isEditMode) {
+                                    selectedButtonForConfig = button ?: ButtonModel(
+                                        id = "btn-${activeProfile.id}-$index",
+                                        profileId = activeProfile.id,
+                                        position = index,
+                                        label = "",
+                                        iconName = "none",
+                                        actionType = "NONE",
+                                        actionValue = "",
+                                    )
                                 } else {
                                     onButtonPress(index)
                                 }
@@ -225,6 +254,8 @@ fun GridScreen(
                             onLongClick = {
                                 if (movingFromPosition != null) {
                                     movingFromPosition = null
+                                } else if (isEditMode) {
+                                    movingFromPosition = index
                                 } else {
                                     selectedButtonForConfig = button ?: ButtonModel(
                                         id = "btn-${activeProfile.id}-$index",

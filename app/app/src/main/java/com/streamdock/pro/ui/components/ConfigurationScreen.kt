@@ -146,41 +146,27 @@ fun ConfigurationScreen(
                                     .padding(8.dp),
                             ) {
                                 Text(
-                                    text = "CONEXIÓN USB (ADB)",
+                                    text = "CONEXIÓN AUTOMÁTICA POR USB",
                                     color = Color.White,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Para que la conexión USB funcione, debes ejecutar el siguiente comando en tu computadora:",
+                                    text = "Conecta tu teléfono a la PC por cable USB con la Depuración USB activada y abre Stream Dock Pro en tu PC: el puente ADB se configura automáticamente.",
                                     color = Color(0xFF9499B0),
                                     fontSize = 12.sp,
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Surface(
-                                    color = Color(0xFF0F0F14),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text(
-                                        text = "adb reverse tcp:8081 tcp:8081",
-                                        color = Color(0xFF00E676),
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(12.dp),
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(14.dp))
                                 PrimaryActionButton(
                                     text = "CONECTAR POR USB",
                                     onClick = onUsbSelected,
-                                    containerColor = Color(0xFF2D313E),
+                                    containerColor = Color(0xFF2196F3),
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Asegúrate de que el servidor StreamDock esté abierto en tu PC.",
-                                    color = Color(0xFF4B4F5E),
+                                    text = "Tip: También puedes copiar la 'IP Local' que aparece arriba en el Editor de PC y pegarla abajo en Conexión Manual.",
+                                    color = Color(0xFF64B5F6),
                                     fontSize = 11.sp,
                                 )
                             }
