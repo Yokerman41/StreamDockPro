@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stream Dock Pro — Consola Táctil y Controlador de PC para Windows y Android</title>
+  <meta name="description" content="Convierte tu teléfono o tablet Android en una consola táctil profesional para Windows con barras deslizantes verticales de volumen, control exclusivo de Spotify, integración OBS Studio WebSocket v5 y servidor Rust integrado." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #090b10;
+      --bg-surface: #11141e;
+      --bg-card: #161a27;
+      --bg-card-hover: #1d2233;
+      --border: #252b3d;
+      --border-glow: rgba(56, 189, 248, 0.45);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cyan: #38bdf8;
+      --accent-indigo: #6366f1;
+      --accent-purple: #a855f7;
+      --accent-spotify: #1db954;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.14), transparent 38%),
+        radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.12), transparent 36%),
+        radial-gradient(circle at 50% 80%, rgba(29, 185, 84, 0.08), transparent 40%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(1220px, 92%);
+      margin: 0 auto;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      background: rgba(9, 11, 16, 0.82);
+      border-bottom: 1px solid rgba(37, 43, 61, 0.75);
+    }
+
+    .navbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #1e2235, #0f111c);
+      border: 1.5px solid var(--accent-cyan);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      padding: 6px;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+    }
+
+    .brand-icon span {
+      border-radius: 2px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      color: #ffffff;
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-spotify {
+      background: linear-gradient(135deg, #15803d, #1db954);
+      color: #ffffff;
+      box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
+    }
+
+    .btn-spotify:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(29, 185, 84, 0.45);
+    }
+
+    .btn-outline {
+      background: rgba(22, 26, 39, 0.85);
+      border-color: var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent-cyan);
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+
+    /* HERO */
+    .hero {
+      padding: 68px 0 54px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-cyan);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-spotify);
+      box-shadow: 0 0 10px var(--accent-spotify);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.3rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      max-width: 920px;
+      margin: 0 auto 20px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #1db954 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: clamp(1.02rem, 1.8vw, 1.2rem);
+      color: var(--text-secondary);
+      max-width: 760px;
+      margin: 0 auto 34px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 52px;
+    }
+
+    /* INTERACTIVE CONSOLE MOCKUP */
+    .console-showcase {
+      background: linear-gradient(180deg, rgba(22, 26, 39, 0.95), rgba(13, 16, 25, 0.98));
+      border: 1.5px solid var(--border);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(56, 189, 248, 0.12);
+      text-align: left;
+    }
+
+    .console-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .console-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #1a2030;
+      border: 1px solid #2b334a;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .pill.active {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+    }
+
+    .pill.vol-pc {
+      background: rgba(168, 85, 247, 0.16);
+      border-color: #a855f7;
+      color: #d8b4fe;
+    }
+
+    .pill.vol-spo {
+      background: rgba(29, 185, 84, 0.16);
+      border-color: #1db954;
+      color: #86efac;
+    }
+
+    .console-body {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .deck-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .deck-tile {
+      position: relative;
+      border-radius: 16px;
+      padding: 16px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+      min-height: 104px;
+      overflow: hidden;
+    }
+
+    .deck-tile::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      height: 36%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent);
+      pointer-events: none;
+    }
+
+    .deck-tile:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .deck-tile:active {
+      transform: scale(0.95);
+    }
+
+    .tile-emoji {
+      font-size: 1.75rem;
+      line-height: 1;
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+    }
+
+    .tile-label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .tile-sub {
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 600;
+    }
+
+    /* VERTICAL VOLUME FADER SPACE INSIDE PROFILE */
+    .volume-dock {
+      background: #10131d;
+      border: 1.5px solid #283048;
+      border-radius: 18px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 162px;
+    }
+
+    .volume-dock-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--accent-cyan);
+      margin-bottom: 10px;
+    }
+
+    .faders-row {
+      display: flex;
+      gap: 12px;
+      height: 100%;
+      align-items: stretch;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .fader-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #161927;
+      border-radius: 14px;
+      padding: 10px 8px;
+      border: 1.5px solid #2e354f;
+      width: 66px;
+    }
+
+    .fader-col.pc {
+      border-color: rgba(168, 85, 247, 0.65);
+    }
+
+    .fader-col.spo {
+      border-color: rgba(29, 185, 84, 0.65);
+    }
+
+    .fader-name {
+      font-size: 0.68rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .fader-pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .fader-track {
+      position: relative;
+      width: 28px;
+      height: 155px;
+      background: #0b0d14;
+      border-radius: 999px;
+      border: 1.5px solid #2c334a;
+      overflow: hidden;
+      cursor: ns-resize;
+      touch-action: none;
+    }
+
+    .fader-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-radius: 999px;
+      transition: height 0.05s linear;
+    }
+
+    .fader-col.pc .fader-fill {
+      background: linear-gradient(180deg, #c084fc, #7c3aed);
+      box-shadow: 0 0 14px rgba(168, 85, 247, 0.55);
+    }
+
+    .fader-col.spo .fader-fill {
+      background: linear-gradient(180deg, #4ade80, #1db954);
+      box-shadow: 0 0 14px rgba(29, 185, 84, 0.55);
+    }
+
+    .fader-mute {
+      margin-top: 8px;
+      width: 100%;
+      padding: 5px 0;
+      border-radius: 8px;
+      border: none;
+      background: #23283b;
+      color: #ffffff;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+
+    .fader-mute:hover {
+      background: #313852;
+    }
+
+    .console-log {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #0c0e16;
+      border: 1px solid #22283a;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #93c5fd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* SECTIONS */
+    section {
+      padding: 72px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 48px;
+    }
+
+    .section-tag {
+      color: var(--accent-cyan);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .section-header h2 {
+      font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      color: var(--text-secondary);
+      font-size: 1.02rem;
+    }
+
+    /* FEATURES GRID */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 22px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: all 0.22s ease;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      margin-bottom: 18px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+    }
+
+    .feature-card h3 {
+      font-size: 1.18rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 0.94rem;
+    }
+
+    /* 8 ACTION CATEGORIES */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .cat-card {
+      background: linear-gradient(145deg, #161a28, #121520);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cat-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.02rem;
+    }
+
+    .cat-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    /* DOWNLOADS TABLE / CARDS */
+    .downloads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .download-card {
+      background: linear-gradient(180deg, #171c2b 0%, #111420 100%);
+      border: 1.5px solid var(--border);
+      border-radius: 22px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .download-card.featured {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.14);
+    }
+
+    .dl-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .dl-tag {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--accent-cyan);
+    }
+
+    .download-card h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .download-card p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      margin-bottom: 16px;
+    }
+
+    .dl-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.86rem;
+      color: #cbd5e1;
+    }
+
+    /* ARCHITECTURE */
+    .arch-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .arch-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+    }
+
+    .arch-step code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .arch-step h4 {
+      font-size: 1.08rem;
+      margin: 12px 0 8px;
+    }
+
+    .arch-step p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 38px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 900px) {
+      .console-body {
+        grid-template-columns: 1fr;
+      }
+      .deck-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .volume-dock {
+        flex-direction: column;
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .deck-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <span style="background:#4f46e5"></span>
+          <span style="background:#f43f5e"></span>
+          <span style="background:#1db954"></span>
+          <span style="background:#38bdf8"></span>
+          <span style="background:#a855f7"></span>
+          <span style="background:#f59e0b"></span>
+          <span style="background:#22c55e"></span>
+          <span style="background:#60a5fa"></span>
+          <span style="background:#eab308"></span>
+        </div>
+        <span>Stream Dock <span style="color:var(--accent-cyan)">Pro</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#demo">Consola Interactiva</a>
+        <a href="#funciones">Características</a>
+        <a href="#categorias">8 Categorías</a>
+        <a href="#arquitectura">Arquitectura</a>
+        <a href="#descargas">Descargas</a>
+      </nav>
+      <a href="https://github.com/Yokerman41/StreamDockPro" target="_blank" rel="noopener" class="btn btn-outline">
+        ⭐ GitHub
+      </a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          Windows (.NET 8 + Rust CoreAudio) &bull; Android (Jetpack Compose)
+        </div>
+        <h1>
+          Tu Teléfono como una <span class="gradient-text">Consola Stream Deck Profesional</span> con Barras de Volumen en Vivo
+        </h1>
+        <p>
+          Controla Windows, Spotify en segundo plano, escenas de OBS Studio v5, ventanas y atajos de teclado con latencia ultrabaja por Wi-Fi o USB ADB, incluyendo un espacio dedicado de barras deslizantes verticales para Volumen PC y Spotify.
+        </p>
+        <div class="hero-actions">
+          <a href="./dist/StreamDockPro_Instalador.exe" class="btn btn-primary">
+            🪟 Descargar Instalador Windows (.EXE)
+          </a>
+          <a href="./dist/Android/StreamDockPro.apk" class="btn btn-spotify">
+            🤖 Descargar App Android (.APK)
+          </a>
+          <a href="./dist/StreamDockPro.exe" class="btn btn-outline">
+            ⚡ Ejecutable Portable PC
+          </a>
+        </div>
+
+        <!-- INTERACTIVE LIVE CONSOLE PREVIEW -->
+        <div id="demo" class="console-showcase">
+          <div class="console-topbar">
+            <div class="console-status">
+              <span class="badge-dot"></span>
+              <span>PANEL DECK &mdash; DEMO INTERACTIVA (Haz clic en los botones o desliza las barras de volumen)</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span class="pill active">🎬 OBS (5×4)</span>
+              <span class="pill">🎵 Multimedia (5×4)</span>
+              <span class="pill vol-pc" onclick="toggleFader('pc')">🎚️ Vol PC ✓</span>
+              <span class="pill vol-spo" onclick="toggleFader('spo')">🟢 Vol Spotify ✓</span>
+            </div>
+          </div>
+
+          <div class="console-body">
+            <!-- 10 Sample Tiles -->
+            <div class="deck-grid">
+              <div class="deck-tile" style="background:linear-gradient(145deg,#1db954,#113022)" onclick="triggerDemo('MEDIA_CONTROL','SPOTIFY_PLAY_PAUSE','Spotify Play / Pausa en 2do plano')">
+                <span class="tile-emoji">⏯️</span>
+                <span class="tile-label">Spotify Play</span>
+                <span class="tile-sub">2do Plano</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#15803d,#0f291e)" onclick="triggerDemo('MEDIA_CONTROL','SPOTIFY_NEXT','Siguiente pista en Spotify')">
+                <span class="tile-emoji">⏭️</span>
+                <span class="tile-label">Spotify Sig.</span>
+                <span class="tile-sub">Exclusivo</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#7c3aed,#2e1654)" onclick="triggerDemo('MEDIA_CONTROL','VOLUME_SLIDER_PC','Barra Deslizante Volumen Maestro PC')">
+                <span class="tile-emoji">🎚️</span>
+                <span class="tile-label">Barra Vol. PC</span>
+                <span class="tile-sub" id="tilePcPct">80%</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#059669,#0b2b22)" onclick="triggerDemo('MEDIA_CONTROL','VOLUME_SLIDER_SPOTIFY','Barra Deslizante Volumen Spotify')">
+                <span class="tile-emoji">🎚️</span>
+                <span class="tile-label">Barra Spotify</span>
+                <span class="tile-sub" id="tileSpoPct">85%</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#e11d48,#3b1020)" onclick="triggerDemo('OBS_SCENE_SWITCH','START_STREAM','OBS Studio: Iniciar / Detener Directo')">
+                <span class="tile-emoji">📡</span>
+                <span class="tile-label">Stream OBS</span>
+                <span class="tile-sub">WebSocket v5</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#2563eb,#152347)" onclick="triggerDemo('OBS_SCENE_SWITCH','Escena Principal','OBS Studio: Cambiar a Escena Principal')">
+                <span class="tile-emoji">🎥</span>
+                <span class="tile-label">Escena OBS</span>
+                <span class="tile-sub">1 Clic</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#d97706,#38200a)" onclick="triggerDemo('OBS_SCENE_SWITCH','TOGGLE_MUTE','OBS Studio: Silenciar Micrófono')">
+                <span class="tile-emoji">🎙️</span>
+                <span class="tile-label">Mute Mic OBS</span>
+                <span class="tile-sub">Audio OBS</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#0284c7,#0f2942)" onclick="triggerDemo('LAUNCH_APP','WIN_MINIMIZE','Minimizar ventana activa de Windows')">
+                <span class="tile-emoji">🗕</span>
+                <span class="tile-label">Minimizar</span>
+                <span class="tile-sub">Ventana Activa</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#4f46e5,#1e1b4b)" onclick="triggerDemo('SYSTEM_COMMAND','SHOW_DESKTOP','Mostrar Escritorio (Win + D)')">
+                <span class="tile-emoji">🖥️</span>
+                <span class="tile-label">Escritorio</span>
+                <span class="tile-sub">Win + D</span>
+              </div>
+              <div class="deck-tile" style="background:linear-gradient(145deg,#334155,#182030)" onclick="triggerDemo('KEYBOARD_HOTKEY','CTRL+SHIFT+M','Atajo enviado: CTRL + SHIFT + M (Mute Discord)')">
+                <span class="tile-emoji">⌨️</span>
+                <span class="tile-label">Mute Discord</span>
+                <span class="tile-sub">Ctrl+Shift+M</span>
+              </div>
+            </div>
+
+            <!-- Dedicated Profile Volume Bar Space -->
+            <div class="volume-dock">
+              <div class="volume-dock-title">🎚️ VOLUMEN DEL PERFIL</div>
+              <div class="faders-row">
+                <!-- PC Master Vertical Slider -->
+                <div class="fader-col pc" id="faderColPc">
+                  <span class="fader-name" style="color:#c084fc">🔊 PC</span>
+                  <span class="fader-pct" id="pcPctLabel">80%</span>
+                  <div class="fader-track" id="pcTrack" title="Arrastra de arriba a abajo para ajustar el Volumen Maestro del PC">
+                    <div class="fader-fill" id="pcFill" style="height:80%"></div>
+                  </div>
+                  <button class="fader-mute" onclick="muteDemo('pc')" title="Silenciar PC">🔇</button>
+                </div>
+
+                <!-- Spotify Exclusive Vertical Slider -->
+                <div class="fader-col spo" id="faderColSpo">
+                  <span class="fader-name" style="color:#4ade80">🟢 SPO</span>
+                  <span class="fader-pct" id="spoPctLabel">85%</span>
+                  <div class="fader-track" id="spoTrack" title="Arrastra de arriba a abajo para ajustar solo el volumen de Spotify">
+                    <div class="fader-fill" id="spoFill" style="height:85%"></div>
+                  </div>
+                  <button class="fader-mute" onclick="muteDemo('spo')" title="Silenciar solo Spotify">🔇</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="console-log">
+            <span id="consoleOutput">⚡ Listo &mdash; Desliza las barras verticales de arriba a abajo o toca cualquier botón del perfil.</span>
+            <span style="color:var(--accent-spotify)">ws://192.168.1.X:8081 &bull; CoreAudio Activo</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="funciones">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Potencia y Simplicidad</span>
+          <h2>Diseñado para Streamers, Creadores y Gamers</h2>
+          <p>Todo integrado en un único ejecutable para Windows sin ventanas de consola (CMD) y una aplicación Android fluida y 100% adaptable.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎚️</div>
+            <h3>Barras Verticales de Volumen en el Perfil</h3>
+            <p>
+              Crea un espacio lateral de faders verticales dentro de cualquier perfil para subir o bajar el <strong>Volumen Maestro del PC</strong> y el <strong>Volumen Exclusivo de Spotify</strong> deslizando el dedo de arriba a abajo (<code>100%</code> a <code>0%</code>) en tiempo real.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🟢</div>
+            <h3>Control Exclusivo de Spotify en 2do Plano</h3>
+            <p>
+              Ajusta el volumen solo de <code>Spotify.exe</code> mediante Windows Core Audio (<code>ISimpleAudioVolume</code>) y cambia canciones con <code>WM_APPCOMMAND</code> sin bajar el volumen de tu juego ni salir de la partida.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🎥</div>
+            <h3>OBS Studio WebSocket v5 con Auto-Escaneo</h3>
+            <p>
+              Escanea automáticamente tus escenas y fuentes de OBS Studio con un solo clic, controla transmisión en directo, grabación y silencio de micrófono con autenticación SHA-256 persistente.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>Interfaz Android Moderna y Adaptativa</h3>
+            <p>
+              Usa <code>NavigationRail</code> lateral en horizontal, barra inferior en vertical, rotación automática de cuadrículas (<code>4×5</code> a <code>5×4</code>), <strong>Modo Consola a Pantalla Completa</strong> y <strong>Modo Edición en 1 Toque</strong>.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <h3>Auto-Perfil Inteligente y Grabador de Teclas</h3>
+            <p>
+              Cambia de perfil automáticamente cuando abres un juego o programa en Windows (ej. <code>obs64.exe</code>, <code>Spotify.exe</code>) y graba combinaciones como <code>CTRL+SHIFT+M</code> presionando las teclas reales.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📦</div>
+            <h3>1 Solo Ejecutable en PC (Sin Ventanas CMD)</h3>
+            <p>
+              El servidor asíncrono en Rust (<code>pc-companion-rust</code>) va incrustado dentro de <code>StreamDockPro.exe</code>, se extrae y ejecuta de forma 100% silenciosa y soporta minimizado a la Bandeja del Sistema.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 ACTION CATEGORIES -->
+    <section id="categorias" style="background: rgba(17, 20, 30, 0.55); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Configuración en 1 Clic</span>
+          <h2>8 Categorías Visuales de Acciones</h2>
+          <p>Tanto el Editor de PC como la App Android organizan todas las funciones en 8 categorías directas con paleta de colores rápida y vista previa en vivo.</p>
+        </div>
+
+        <div class="categories-grid">
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#c084fc">🎵 1. Audio PC</span></div>
+            <p>Barra Deslizante Vertical de Volumen PC, Play/Pausa global, Silenciar PC, Subir/Bajar Volumen y cambio de pista.</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#1db954">🟢 2. Spotify Exclusivo</span></div>
+            <p>Barra Deslizante Vertical de Volumen Spotify, Play/Pausa, Siguiente, Anterior, Mute exclusivo y Abrir Spotify.</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#60a5fa">🚀 3. Abrir Aplicación</span></div>
+            <p>Lanza cualquier programa (<code>.exe</code>), acceso directo (<code>.lnk</code>) o carpeta extrayendo su icono real en alta resolución <code>256×256</code>.</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#38bdf8">🪟 4. Gestión de Ventanas</span></div>
+            <p>Minimizar ventana activa, Maximizar / Restaurar pantalla completa, Cerrar ventana y Mostrar Escritorio (<code>Win+D</code>).</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#67e8f9">🎥 5. OBS Studio</span></div>
+            <p>Cambio instantáneo de escenas, mostrar/ocultar fuentes, Iniciar/Detener Stream, Grabar y Silenciar Micrófono.</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#fde047">⌨️ 6. Atajo de Teclado</span></div>
+            <p>Grabador interactivo de combinaciones de teclas y presets listos para Mute Discord (<code>Ctrl+Shift+M</code>), Captura, Copiar y Pegar.</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#818cf8">📄 7. Ir a Página</span></div>
+            <p>Crea botones de navegación tipo carpeta para saltar entre perfiles y páginas de tu Stream Dock con un toque.</p>
+          </div>
+          <div class="cat-card">
+            <div class="cat-card-header"><span style="color:#fb7185">⚙️ 8. Sistema PC</span></div>
+            <p>Bloquear estación de trabajo (<code>Win+L</code>), Suspender equipo, Reiniciar y Apagado seguro de Windows.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="arquitectura">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Ingeniería de Baja Latencia</span>
+          <h2>Arquitectura Cliente-Servidor en Tiempo Real</h2>
+          <p>Sincronización bidireccional instantánea entre el Editor de Windows, el Servidor Rust y todos tus dispositivos Android conectados por Wi-Fi o cable USB.</p>
+        </div>
+
+        <div class="arch-box">
+          <div class="arch-step">
+            <code>1. Servidor Rust (Axum + Tokio)</code>
+            <h4>Núcleo Win32 &amp; CoreAudio</h4>
+            <p>Escucha en el puerto <code>8081</code>, gestiona contextos aislados por dispositivo (<code>DashMap</code>) y controla el audio de Windows (<code>IAudioEndpointVolume</code>) y de Spotify (<code>ISimpleAudioVolume</code>) sin latencia.</p>
+          </div>
+          <div class="arch-step">
+            <code>2. Editor PC (.NET 8 WPF)</code>
+            <h4>Configurador Visual + Auto-ADB</h4>
+            <p>Incrusta y lanza el servidor Rust automáticamente, detecta dispositivos Android por USB ejecutando <code>adb reverse tcp:8081 tcp:8081</code> y sincroniza iconos 256×256 en Base64.</p>
+          </div>
+          <div class="arch-step">
+            <code>3. App Android (Kotlin + Compose)</code>
+            <h4>Superficie Táctil Adaptativa</h4>
+            <p>Renderiza cuadrículas dinámicas con retroalimentación háptica, faders verticales multitáctiles, páginas deslizables y reconexión automática por WebSocket.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOADS -->
+    <section id="descargas">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Instalación Inmediata</span>
+          <h2>Descarga Stream Dock Pro</h2>
+          <p>Archivos compilados y firmados listos para instalar en tu PC con Windows 10/11 y en tu teléfono o tablet Android.</p>
+        </div>
+
+        <div class="downloads-grid">
+          <div class="download-card featured">
+            <div>
+              <div class="dl-meta">
+                <span class="dl-tag">RECOMENDADO PARA PC</span>
+                <span style="color:var(--text-muted); font-size:0.82rem;">Windows 10 / 11 (x64)</span>
+              </div>
+              <h3>🪟 Instalador Oficial Windows</h3>
+              <p>Instalador gráfico en 1 clic que configura el Editor de PC con el Servidor Rust integrado y crea los accesos directos en el Escritorio y Menú Inicio.</p>
+              <ul class="dl-list">
+                <li>✔️ Servidor Rust 100% silencioso (sin CMD)</li>
+                <li>✔️ Barras verticales de Volumen PC y Spotify</li>
+                <li>✔️ Soporte automático USB ADB y Wi-Fi LAN</li>
+              </ul>
+            </div>
+            <a href="./dist/StreamDockPro_Instalador.exe" class="btn btn-primary" style="width:100%">
+              ⬇️ Descargar StreamDockPro_Instalador.exe
+            </a>
+          </div>
+
+          <div class="download-card featured" style="border-color: var(--accent-spotify);">
+            <div>
+              <div class="dl-meta">
+                <span class="dl-tag" style="background:rgba(29,185,84,0.15); color:var(--accent-spotify);">ANDROID APK FIRMADO</span>
+                <span style="color:var(--text-muted); font-size:0.82rem;">Android 8.0+</span>
+              </div>
+              <h3>🤖 Aplicación Android Oficial</h3>
+              <p>Convierte tu teléfono o tablet en una consola táctil adaptativa con Modo Consola a pantalla completa y barras deslizantes verticales de volumen.</p>
+              <ul class="dl-list">
+                <li>✔️ Faders táctiles verticales para PC y Spotify</li>
+                <li>✔️ Adaptable a Vertical, Horizontal y Tablets</li>
+                <li>✔️ Edición de botones y movimiento sin esperas</li>
+              </ul>
+            </div>
+            <a href="./dist/Android/StreamDockPro.apk" class="btn btn-spotify" style="width:100%">
+              ⬇️ Descargar StreamDockPro.apk
+            </a>
+          </div>
+
+          <div class="download-card">
+            <div>
+              <div class="dl-meta">
+                <span class="dl-tag">PORTABLE SIN INSTALACIÓN</span>
+                <span style="color:var(--text-muted); font-size:0.82rem;">1 Solo Archivo .EXE</span>
+              </div>
+              <h3>⚡ Ejecutable Portable PC</h3>
+              <p>Ejecuta Stream Dock Pro directamente sin instalar nada. Incluye el Servidor Rust embebido dentro del mismo archivo ejecutable.</p>
+              <ul class="dl-list">
+                <li>✔️ Ideal para llevar en USB o ejecutar al instante</li>
+                <li>✔️ Minimizado a la bandeja del sistema</li>
+                <li>✔️ Persistencia automática de perfiles y OBS</li>
+              </ul>
+            </div>
+            <a href="./dist/StreamDockPro.exe" class="btn btn-outline" style="width:100%">
+              ⬇️ Descargar StreamDockPro.exe
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>
+        <strong>Stream Dock Pro</strong> &mdash; Desarrollado para Windows (.NET 8 + Rust) y Android (Kotlin + Jetpack Compose).
+        <br />
+        Repositorio Oficial en GitHub:
+        <a href="https://github.com/Yokerman41/StreamDockPro" target="_blank" rel="noopener" style="color:var(--accent-cyan); font-weight:700;">
+          github.com/Yokerman41/StreamDockPro
+        </a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    const output = document.getElementById('consoleOutput');
+
+    function triggerDemo(type, value, desc) {
+      output.innerHTML = `🚀 <strong>[${type}]</strong> <code>${value}</code> &rarr; ${desc}`;
+    }
+
+    function toggleFader(which) {
+      const col = document.getElementById(which === 'pc' ? 'faderColPc' : 'faderColSpo');
+      if (!col) return;
+      const hidden = col.style.display === 'none';
+      col.style.display = hidden ? 'flex' : 'none';
+      output.innerHTML = hidden
+        ? `🎚️ Barra vertical de <strong>${which === 'pc' ? 'Volumen PC' : 'Spotify'}</strong> agregada al espacio del perfil.`
+        : `🎚️ Barra vertical de <strong>${which === 'pc' ? 'Volumen PC' : 'Spotify'}</strong> ocultada del perfil.`;
+    }
+
+    function muteDemo(which) {
+      if (which === 'pc') {
+        setFaderLevel('pc', 0);
+        output.innerHTML = `🔇 <strong>[MEDIA_CONTROL]</strong> <code>VOLUME_MUTE</code> &rarr; Volumen Maestro de Windows silenciado (0%)`;
+      } else {
+        setFaderLevel('spo', 0);
+        output.innerHTML = `🔇 <strong>[MEDIA_CONTROL]</strong> <code>SPOTIFY_MUTE</code> &rarr; Solo Spotify silenciado (0%) sin afectar juegos`;
+      }
+    }
+
+    function setFaderLevel(which, pct) {
+      const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+      if (which === 'pc') {
+        document.getElementById('pcFill').style.height = clamped + '%';
+        document.getElementById('pcPctLabel').textContent = clamped + '%';
+        document.getElementById('tilePcPct').textContent = clamped + '%';
+        output.innerHTML = `🎚️ <strong>[MEDIA_CONTROL]</strong> <code>VOLUME_SET:${clamped}</code> &rarr; Volumen Maestro PC ajustado al ${clamped}%`;
+      } else {
+        document.getElementById('spoFill').style.height = clamped + '%';
+        document.getElementById('spoPctLabel').textContent = clamped + '%';
+        document.getElementById('tileSpoPct').textContent = clamped + '%';
+        output.innerHTML = `🎚️ <strong>[MEDIA_CONTROL]</strong> <code>SPOTIFY_SET_VOL:${clamped}</code> &rarr; Volumen Exclusivo de Spotify ajustado al ${clamped}%`;
+      }
+    }
+
+    function attachVerticalFader(trackId, which) {
+      const track = document.getElementById(trackId);
+      if (!track) return;
+      let dragging = false;
+
+      const updateFromEvent = (clientY) => {
+        const rect = track.getBoundingClientRect();
+        const relY = clientY - rect.top;
+        const pct = ((rect.height - relY) / rect.height) * 100;
+        setFaderLevel(which, pct);
+      };
+
+      track.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        track.setPointerCapture(e.pointerId);
+        updateFromEvent(e.clientY);
+      });
+
+      track.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        updateFromEvent(e.clientY);
+      });
+
+      track.addEventListener('pointerup', () => {
+        dragging = false;
+      });
+    }
+
+    attachVerticalFader('pcTrack', 'pc');
+    attachVerticalFader('spoTrack', 'spo');
+  </script>
+</body>
+</html>
