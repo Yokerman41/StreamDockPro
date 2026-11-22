@@ -43,6 +43,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -96,6 +97,8 @@ fun GridScreen(
     var spotifyVolumePercent by rememberSaveable { mutableIntStateOf(85) }
     var lastPcSendTime by remember { mutableLongStateOf(0L) }
     var lastSpotifySendTime by remember { mutableLongStateOf(0L) }
+    val vmSliderPercents = remember { mutableStateMapOf<String, Int>() }
+    var lastVmSendTime by remember { mutableLongStateOf(0L) }
 
     val updatePcVolume: (Int, Boolean) -> Unit = { newPct, forceSend ->
         val clamped = newPct.coerceIn(0, 100)
@@ -114,6 +117,16 @@ fun GridScreen(
         if (forceSend || now - lastSpotifySendTime >= 45L) {
             lastSpotifySendTime = now
             onQuickAction("MEDIA_CONTROL", "SPOTIFY_SET_VOL:$clamped")
+        }
+    }
+
+    val updateVmVolume: (String, Int, Boolean) -> Unit = { actionKey, newPct, forceSend ->
+        val clamped = newPct.coerceIn(0, 100)
+        vmSliderPercents[actionKey] = clamped
+        val now = System.currentTimeMillis()
+        if (forceSend || now - lastVmSendTime >= 45L) {
+            lastVmSendTime = now
+            onQuickAction("VOICEMEETER", "$actionKey:$clamped")
         }
     }
 
@@ -399,6 +412,8 @@ fun GridScreen(
                                 val isMoveTarget = movingFromPosition != null && movingFromPosition != index
                                 val isPcSliderTile = button?.actionValue.equals("VOLUME_SLIDER_PC", ignoreCase = true)
                                 val isSpotifySliderTile = button?.actionValue.equals("VOLUME_SLIDER_SPOTIFY", ignoreCase = true)
+                                val isVmSliderTile = button?.actionValue?.startsWith("VOLUME_SLIDER_VM_", ignoreCase = true) == true
+                                val vmActionKey = button?.actionValue.orEmpty()
 
                                 ButtonTile(
                                     position = index,
@@ -417,11 +432,13 @@ fun GridScreen(
                                     sliderVolumePercent = when {
                                         isPcSliderTile -> pcVolumePercent
                                         isSpotifySliderTile -> spotifyVolumePercent
+                                        isVmSliderTile -> vmSliderPercents[vmActionKey] ?: 100
                                         else -> null
                                     },
                                     onSliderVolumeChange = when {
                                         isPcSliderTile -> { pct, final -> updatePcVolume(pct, final) }
                                         isSpotifySliderTile -> { pct, final -> updateSpotifyVolume(pct, final) }
+                                        isVmSliderTile -> { pct, final -> updateVmVolume(vmActionKey, pct, final) }
                                         else -> null
                                     },
                                     onClick = {

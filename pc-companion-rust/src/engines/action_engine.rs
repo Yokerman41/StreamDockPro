@@ -2,6 +2,7 @@ use tracing::info;
 use crate::plugins::obs_websocket::ObsWebsocketPlugin;
 use crate::plugins::process_launcher::ProcessLauncherPlugin;
 use crate::plugins::streamer_bot::StreamerBotPlugin;
+use crate::plugins::voicemeeter::VoicemeeterPlugin;
 use crate::plugins::win32_input::Win32InputPlugin;
 
 pub struct ActionEngine;
@@ -14,13 +15,26 @@ impl ActionEngine {
                 ProcessLauncherPlugin::launch(action_value)
             }
             "MEDIA_CONTROL" => {
-                Win32InputPlugin::send_media_key(action_value)
+                if action_value.starts_with("VOICEMEETER_")
+                    || action_value.starts_with("VM_")
+                    || action_value.starts_with("VOLUME_SLIDER_VM_")
+                {
+                    VoicemeeterPlugin::execute_action(action_value)
+                } else {
+                    Win32InputPlugin::send_media_key(action_value)
+                }
+            }
+            "VOICEMEETER" | "VOICEMEETER_CONTROL" => {
+                VoicemeeterPlugin::execute_action(action_value)
             }
             "SYSTEM_COMMAND" => {
                 if let Some(pid_str) = action_value.strip_prefix("KILL_PROCESS:") {
                     if let Ok(pid) = pid_str.trim().parse::<u32>() {
                         return crate::plugins::task_manager::TaskManagerPlugin::kill_process(pid);
                     }
+                }
+                if action_value.starts_with("VOICEMEETER_") || action_value.starts_with("VM_") {
+                    return VoicemeeterPlugin::execute_action(action_value);
                 }
                 Win32InputPlugin::execute_system_command(action_value)
             }
@@ -34,8 +48,15 @@ impl ActionEngine {
                 StreamerBotPlugin::run_action(action_value)
             }
             _ => {
-                info!("Generic action executed: {action_type} -> {action_value}");
-                Ok(())
+                if action_value.starts_with("VOICEMEETER_")
+                    || action_value.starts_with("VM_")
+                    || action_value.starts_with("VOLUME_SLIDER_VM_")
+                {
+                    VoicemeeterPlugin::execute_action(action_value)
+                } else {
+                    info!("Generic action executed: {action_type} -> {action_value}");
+                    Ok(())
+                }
             }
         }
     }

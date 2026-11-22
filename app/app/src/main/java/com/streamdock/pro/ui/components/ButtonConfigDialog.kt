@@ -72,6 +72,7 @@ private data class ActionPreset(
 private val categoryTabs = listOf(
     ActionCategoryTab("AUDIO_PC", "🎵 Audio PC", "MEDIA_CONTROL", Color(0xFFCBA6F7)),
     ActionCategoryTab("SPOTIFY", "🟢 Spotify", "MEDIA_CONTROL", Color(0xFF1DB954)),
+    ActionCategoryTab("VOICEMEETER", "🎛️ Voicemeeter", "VOICEMEETER", Color(0xFFFFB86C)),
     ActionCategoryTab("LAUNCH_APP", "🚀 Abrir App", "LAUNCH_APP", Color(0xFF89B4FA)),
     ActionCategoryTab("WINDOWS", "🪟 Ventanas", "LAUNCH_APP", Color(0xFF38BDF8)),
     ActionCategoryTab("OBS_SCENE_SWITCH", "🎥 OBS Studio", "OBS_SCENE_SWITCH", Color(0xFF89DCEB)),
@@ -99,6 +100,22 @@ private val presetsByCategory: Map<String, List<ActionPreset>> = mapOf(
         ActionPreset("MEDIA_CONTROL", "SPOTIFY_VOL_UP", "Spotify Vol+", "No sube juegos/PC", "vol_up", "#1DB954"),
         ActionPreset("MEDIA_CONTROL", "SPOTIFY_VOL_DOWN", "Spotify Vol-", "No baja juegos/PC", "vol_down", "#1DB954"),
         ActionPreset("MEDIA_CONTROL", "SPOTIFY_MUTE", "Spotify Mute", "Silencia solo Spotify", "mute", "#E74C3C"),
+    ),
+    "VOICEMEETER" to listOf(
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].Mute", "Mute Micrófono", "Hardware 1 (Realtek)", "mic_off", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].A1", "Mic -> A1", "Monitoreo en Altavoces", "mic", "#9B59B6"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[0].B1", "Mic -> B1", "Canal Discord/OBS", "stream", "#2ECC71"),
+        ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP0", "🎚️ Fader Micrófono", "Ganancia Mic (Hardware 1)", "vol_up", "#FFB86C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].Mute", "Mute VAIO (PC)", "Audio Virtual Voicemeeter", "mute", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[3].A2", "VAIO -> A2", "Audio PC a Auriculares", "vol_up", "#3498DB"),
+        ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP3", "🎚️ Fader VAIO PC", "Volumen Voicemeeter Input", "vol_up", "#FFB86C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].Mute", "Mute AUX", "Audio Virtual Auxiliar", "mute", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Strip[4].A1", "AUX -> A1", "Aux a Altavoces", "vol_up", "#9B59B6"),
+        ActionPreset("VOICEMEETER", "VOLUME_SLIDER_VM_STRIP4", "🎚️ Fader AUX", "Volumen Voicemeeter AUX", "vol_up", "#FFB86C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Bus[0].Mute", "Mute Master A1", "Altavoces Realtek", "mute", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_TOGGLE:Bus[1].Mute", "Mute Master A2", "NVIDIA GPM27Q", "mute", "#E74C3C"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_RESTART", "Reiniciar Audio", "Reiniciar motor Voicemeeter", "power", "#E67E22"),
+        ActionPreset("VOICEMEETER", "VOICEMEETER_SHOW", "Abrir Interfaz", "Mostrar ventana Voicemeeter", "apps", "#3498DB"),
     ),
     "WINDOWS" to listOf(
         ActionPreset("LAUNCH_APP", "WIN_MINIMIZE", "Minimizar", "Oculta ventana activa", "computer", "#3498DB"),
@@ -135,6 +152,10 @@ private val presetsByCategory: Map<String, List<ActionPreset>> = mapOf(
 )
 
 private fun inferInitialCategory(actionType: String, actionValue: String): String = when {
+    actionType == "VOICEMEETER" ||
+        actionValue.startsWith("VOICEMEETER_", ignoreCase = true) ||
+        actionValue.startsWith("VM_", ignoreCase = true) ||
+        actionValue.startsWith("VOLUME_SLIDER_VM_", ignoreCase = true) -> "VOICEMEETER"
     actionType == "MEDIA_CONTROL" && (
         actionValue.startsWith("SPOTIFY_", ignoreCase = true) ||
             actionValue.startsWith("VOLUME_SLIDER_SPOTIFY", ignoreCase = true)

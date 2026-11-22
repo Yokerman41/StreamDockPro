@@ -351,6 +351,40 @@ async fn handle_socket(socket: WebSocket, state: Arc<ServerState>) {
                         };
                         let _ = state.broadcast_tx.send(reply);
                     }
+                    "voicemeeter_get_state" => {
+                        let target_uuid = envelope.uuid.clone();
+                        let vm_state = crate::plugins::voicemeeter::VoicemeeterPlugin::get_state();
+                        let reply = WsEnvelope {
+                            r#type: "voicemeeter_state".to_string(),
+                            uuid: target_uuid,
+                            timestamp: Some(chrono::Utc::now().timestamp_millis() as u64),
+                            payload: Some(vm_state),
+                        };
+                        let _ = state.broadcast_tx.send(reply);
+                    }
+                    "voicemeeter_set_param" => {
+                        let target_uuid = envelope.uuid.clone();
+                        if let Some(ref payload) = envelope.payload {
+                            if let Some(param) = payload.get("param").and_then(|v| v.as_str()) {
+                                if let Some(val) = payload.get("value").and_then(|v| v.as_f64()) {
+                                    let _ = crate::plugins::voicemeeter::VoicemeeterPlugin::set_parameter_float(param, val as f32);
+                                } else if let Some(action) = payload.get("action").and_then(|v| v.as_str()) {
+                                    if action == "toggle" {
+                                        let _ = crate::plugins::voicemeeter::VoicemeeterPlugin::toggle_parameter(param);
+                                    }
+                                }
+                            }
+                        }
+                        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+                        let vm_state = crate::plugins::voicemeeter::VoicemeeterPlugin::get_state();
+                        let reply = WsEnvelope {
+                            r#type: "voicemeeter_state".to_string(),
+                            uuid: target_uuid,
+                            timestamp: Some(chrono::Utc::now().timestamp_millis() as u64),
+                            payload: Some(vm_state),
+                        };
+                        let _ = state.broadcast_tx.send(reply);
+                    }
                     "action" => {
                         info!("Action trigger received from client: {:?}", envelope.uuid);
                         if let Some(payload) = envelope.payload {

@@ -109,3 +109,22 @@ Tanto en el panel derecho del **Editor de PC (`MainWindow.xaml`)** como en el mo
   - **Scroll Unificado Natural**: La cabecera, la barra de búsqueda y los filtros de selección se integraron directamente dentro del contenedor desplazable (`LazyColumn`). Al deslizar hacia arriba o hacia abajo, estos elementos se mueven suavemente con la lista en lugar de quedar fijos, liberando el 100% de la altura de la pantalla para visualizar los procesos.
   - **Buscador y Filtros en Fila Compacta**: En orientación horizontal, la barra de búsqueda y los botones de filtro se organizan lado a lado en una sola fila (`Row(height = 44.dp)`), ahorrando más del 50% del espacio vertical.
   - **Cuadrícula de 2 Columnas Paralelas**: Los procesos se agrupan en pares (`chunked(2)`) ocupando dos columnas balanceadas en pantallas panorámicas, lo que permite visualizar entre 6 y 10 procesos simultáneamente sin recortes ni saturación.
+
+---
+
+## 8. Integración Nativa con Voicemeeter Banana (Audio Profesional)
+- **Conexión Directa con la API Oficial de Voicemeeter (`VoicemeeterRemote64.dll`)**:
+  - El servidor Rust (`pc-companion-rust/src/plugins/voicemeeter.rs`) localiza y enlaza en tiempo de ejecución la biblioteca oficial instalada en `C:\Program Files (x86)\VB\Voicemeeter\VoicemeeterRemote64.dll`.
+  - Inicializa sesión con `VBVMR_Login` y detecta automáticamente el tipo de consola (`Voicemeeter Banana` = Tipo 2).
+  - Control instantáneo sin latencia ni atajos de teclado para entradas físicas (`Strip[0]` Micrófono Realtek), entradas virtuales (`Strip[3]` VAIO y `Strip[4]` AUX), y salidas master (`Bus[0..4]`).
+- **Presets de Acción en el Editor de PC y Modal de Configuración Android**:
+  - Nueva categoría **`🎛️ Voicemeeter`** integrada en el catálogo de acciones tanto en el Editor WinUI de Windows como en el modal de configuración de la app:
+    - *Micrófono*: Mute/Unmute (`VOICEMEETER_TOGGLE:Strip[0].Mute`), envío a monitoreo A1 (`VOICEMEETER_TOGGLE:Strip[0].A1`), envío a transmisión/Discord B1 (`VOICEMEETER_TOGGLE:Strip[0].B1`).
+    - *Voicemeeter VAIO (PC/Juegos)*: Mute (`VOICEMEETER_TOGGLE:Strip[3].Mute`), envío a Auriculares A2 (`VOICEMEETER_TOGGLE:Strip[3].A2`).
+    - *Voicemeeter AUX*: Mute (`VOICEMEETER_TOGGLE:Strip[4].Mute`), envío a Altavoces A1 (`VOICEMEETER_TOGGLE:Strip[4].A1`).
+    - *Buses Master*: Mute Master A1 (`VOICEMEETER_TOGGLE:Bus[0].Mute`) y Mute Master A2 (`VOICEMEETER_TOGGLE:Bus[1].Mute`).
+    - *Mantenimiento*: Reinicio del motor de audio en 1 toque (`VOICEMEETER_RESTART`) y abrir la ventana de Voicemeeter (`VOICEMEETER_SHOW`).
+- **Faders Verticales Táctiles para Pistas de Voicemeeter**:
+  - Soporte para botones deslizantes táctiles en el perfil de la app (`VOLUME_SLIDER_VM_STRIP0` para Micrófono, `VOLUME_SLIDER_VM_STRIP3` para PC VAIO, `VOLUME_SLIDER_VM_STRIP4` para AUX).
+  - Permiten modular la ganancia en decibelios de cada canal deslizando el dedo de arriba a abajo directamente sobre el botón.
+

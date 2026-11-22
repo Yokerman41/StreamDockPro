@@ -607,6 +607,24 @@
                                     <Button Content="⚙️ Sistema PC" Command="{Binding SelectActionTypeCommand}" CommandParameter="SYSTEM_COMMAND"
                                             Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
                                 </Border>
+
+                                <!-- 9. Voicemeeter Banana -->
+                                <Border CornerRadius="6" Margin="2" BorderThickness="1.5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#262738"/>
+                                            <Setter Property="BorderBrush" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="VOICEMEETER">
+                                                    <Setter Property="Background" Value="#4A3418"/>
+                                                    <Setter Property="BorderBrush" Value="#FFB86C"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Button Content="🎛️ Voicemeeter" Command="{Binding SelectActionTypeCommand}" CommandParameter="VOICEMEETER"
+                                            Background="Transparent" Foreground="White" BorderThickness="0" Padding="5,6" FontSize="11" FontWeight="SemiBold" Cursor="Hand"/>
+                                </Border>
                             </UniformGrid>
                         </StackPanel>
 
@@ -1204,6 +1222,142 @@
                                                     <TextBlock Text="🛑" FontSize="20" HorizontalAlignment="Center"/>
                                                     <TextBlock Text="Apagar PC" FontWeight="Bold" Foreground="#F38BA8" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                                                     <TextBlock Text="Apagado seguro" Foreground="#A6ADC8" FontSize="9" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                    </UniformGrid>
+                                </StackPanel>
+
+                                <!-- ==================== 9. VOICEMEETER BANANA ==================== -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedCategoryTab}" Value="VOICEMEETER">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <TextBlock Text="PRESETS VOICEMEETER BANANA (CONTROL DIRECTO)" FontWeight="Bold" Foreground="#FFB86C" FontSize="10" Margin="0,0,0,6"/>
+
+                                    <TextBlock Text="ENTRADAS (STRIPS - MICRÓFONO Y VIRTUALES)" FontWeight="SemiBold" Foreground="#A6ADC8" FontSize="9" Margin="0,2,0,4"/>
+                                    <UniformGrid Columns="2" Margin="0,0,0,6">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[0].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎙️ Mute Micrófono" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="Hardware 1 (Realtek)" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[0].A1" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎧 Mic -&gt; A1 (Mon)" FontWeight="Bold" Foreground="#CBA6F7" FontSize="11"/>
+                                                    <TextBlock Text="Escucharte en Altavoces" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[0].B1" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="📡 Mic -&gt; B1 (Envío)" FontWeight="Bold" Foreground="#A6E3A1" FontSize="11"/>
+                                                    <TextBlock Text="Canal Discord / OBS" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#FFB86C">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_SLIDER_VM_STRIP0" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎚️ Fader Micrófono" FontWeight="Bold" Foreground="#FFB86C" FontSize="11"/>
+                                                    <TextBlock Text="Deslizador en perfil" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[3].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔇 Mute VAIO (PC)" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="Voicemeeter Input" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[3].A2" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔊 VAIO -&gt; A2" FontWeight="Bold" Foreground="#89B4FA" FontSize="11"/>
+                                                    <TextBlock Text="Audio PC a Auriculares" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#FFB86C">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_SLIDER_VM_STRIP3" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎚️ Fader VAIO PC" FontWeight="Bold" Foreground="#FFB86C" FontSize="11"/>
+                                                    <TextBlock Text="Deslizador en perfil" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[4].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔇 Mute AUX" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="Voicemeeter AUX Input" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Strip[4].A1" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔊 AUX -&gt; A1" FontWeight="Bold" Foreground="#CBA6F7" FontSize="11"/>
+                                                    <TextBlock Text="Aux a Altavoces" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#FFB86C">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOLUME_SLIDER_VM_STRIP4" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🎚️ Fader AUX" FontWeight="Bold" Foreground="#FFB86C" FontSize="11"/>
+                                                    <TextBlock Text="Deslizador en perfil" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                    </UniformGrid>
+
+                                    <TextBlock Text="SALIDAS MASTER Y SISTEMA" FontWeight="SemiBold" Foreground="#A6ADC8" FontSize="9" Margin="0,2,0,4"/>
+                                    <UniformGrid Columns="2">
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Bus[0].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔇 Mute Master A1" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="Altavoces Realtek" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#313244">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_TOGGLE:Bus[1].Mute" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔇 Mute Master A2" FontWeight="Bold" Foreground="#F38BA8" FontSize="11"/>
+                                                    <TextBlock Text="GPM27Q NVIDIA" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#FAB387">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_RESTART" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🔄 Reiniciar Motor" FontWeight="Bold" Foreground="#FAB387" FontSize="11"/>
+                                                    <TextBlock Text="Restart Audio Engine" Foreground="#A6ADC8" FontSize="9"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+                                        <Border Background="#212234" CornerRadius="6" Margin="2" Padding="6" BorderThickness="1" BorderBrush="#89B4FA">
+                                            <Button Command="{Binding SelectActionPresetCommand}" CommandParameter="VOICEMEETER_SHOW" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Left" Cursor="Hand">
+                                                <StackPanel>
+                                                    <TextBlock Text="🪟 Abrir Interfaz" FontWeight="Bold" Foreground="#89B4FA" FontSize="11"/>
+                                                    <TextBlock Text="Mostrar ventana Banana" Foreground="#A6ADC8" FontSize="9"/>
                                                 </StackPanel>
                                             </Button>
                                         </Border>
